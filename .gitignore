@@ -1,0 +1,77 @@
+# ─── Environment / secrets ─────────────────────────
+.env
+.env.backup
+.env.production
+.env.*.local
+auth.json
+
+# ─── Dependencies (re-installed on server) ─────────
+/node_modules
+/vendor
+
+# ─── Build artifacts ───────────────────────────────
+# NOTE: keep /public/build IGNORED for normal dev.
+# For Hostinger deploy: build locally, then either
+#   a) `scp -r public/build user@host:.../public/`  OR
+#   b) run `npm run build` on the server if Node is available
+/public/build
+/public/hot
+/public/storage
+
+# ─── Storage (writable runtime — keep structure, ignore contents) ──
+/storage/*.key
+/storage/pail
+/storage/app/public/*
+!/storage/app/public/.gitkeep
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/testing/*
+!/storage/framework/testing/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# ─── Local SQLite (if any) ─────────────────────────
+/database/database.sqlite
+/database/database.sqlite-journal
+
+# ─── Logs / caches ─────────────────────────────────
+*.log
+.phpunit.result.cache
+.phpunit.cache
+_ide_helper.php
+_ide_helper_models.php
+
+# ─── OS junk ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ─── Editor / IDE ──────────────────────────────────
+/.idea
+/.vscode
+/.nova
+/.zed
+/.cursor/
+/.codex
+/.phpstorm.meta.php
+.phpactor.json
+
+# ─── Claude Code / agent state ─────────────────────
+/.claude/
+/memory/
+
+# ─── Homestead / Vagrant (if used) ─────────────────
+Homestead.json
+Homestead.yaml
+
+# ─── Personal scratch ──────────────────────────────
+*.bak
+*.swp
+*.tmp
+/scratch/
+/tmp/

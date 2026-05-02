@@ -1,0 +1,365 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #08090C; }
+::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+.light-theme::-webkit-scrollbar-track,
+.light-theme ::-webkit-scrollbar-track { background: #F8F9FC; }
+.light-theme::-webkit-scrollbar-thumb,
+.light-theme ::-webkit-scrollbar-thumb { background: #cbd5e1; border: 2px solid #F8F9FC; border-radius: 4px; }
+.light-theme::-webkit-scrollbar-thumb:hover,
+.light-theme ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.light-theme .custom-scroll::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.15); }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Floating shurikens background — calm rising animation */
+@keyframes shuriken-rise {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg);                                             opacity: 0; }
+    8%   { opacity: var(--shuriken-opacity, 0.08); }
+    50%  { transform: translate3d(var(--shuriken-drift, 16px), -55vh, 0) rotate(360deg); }
+    92%  { opacity: var(--shuriken-opacity, 0.08); }
+    100% { transform: translate3d(calc(var(--shuriken-drift, 16px) * -1), -110vh, 0) rotate(720deg); opacity: 0; }
+}
+.shuriken {
+    position: absolute;
+    bottom: -60px;
+    color: rgba(165, 180, 252, 0.85);            /* amber-300 tint */
+    animation: shuriken-rise var(--shuriken-duration, 40s) cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation-delay: var(--shuriken-delay, 0s);
+    will-change: transform, opacity;
+    pointer-events: none;
+    filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.18));
+}
+.shuriken svg { display: block; }
+.light-theme .shuriken { color: rgba(99, 102, 241, 0.55); }
+
+/* Inline highlight for Hören Teil 1 statement keywords */
+.hl-key {
+    background: linear-gradient(180deg, transparent 55%, rgba(168, 85, 247, 0.35) 55%);
+    color: #fff;
+    font-weight: 700;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+
+/* Shiny Button */
+.btn-shine { position: relative; overflow: hidden; }
+.btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.10), transparent);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+}
+.btn-shine:hover::after { left: 150%; transition: 0.7s ease-in-out; }
+
+/* Card Hover */
+.card-hover { transition: all 0.3s ease; }
+.card-hover:hover {
+    border-color: rgba(99,102,241,0.3);
+    box-shadow: 0 0 30px -10px rgba(99,102,241,0.15);
+    transform: translateY(-2px);
+}
+
+/* Theme toggle icon swap (CSS-only, no JS framework dependency) */
+.theme-icon-sun  { display: block; }
+.theme-icon-moon { display: none; }
+.light-theme .theme-icon-sun  { display: none; }
+.light-theme .theme-icon-moon { display: block; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT THEME — glassmorphism + yellow→red brand gradient backdrop
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Base canvas */
+.light-theme {
+    background: #fffaf0 !important;
+    color: #1e293b !important;
+}
+.light-theme body {
+    background: transparent !important;
+    color: #1e293b !important;
+}
+
+/* Brand gradient orbs — soft yellow + red blobs behind everything */
+.light-theme body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(45vw 45vw at 8% 12%,  rgba(252, 211, 77, 0.55), transparent 65%),
+        radial-gradient(50vw 50vw at 92% 88%, rgba(248, 113, 113, 0.45), transparent 65%),
+        radial-gradient(40vw 40vw at 50% 50%, rgba(254, 240, 138, 0.40), transparent 70%),
+        linear-gradient(135deg, #fffbeb 0%, #fef3c7 35%, #ffe4e6 100%);
+    filter: blur(40px) saturate(110%);
+}
+
+/* Hide the dark-mode amber glow blob */
+.light-theme nav + div > .fixed.inset-0 .absolute.bg-amber-500\/20 { display: none; }
+
+/* Shurikens recolor for light backdrop */
+.light-theme .shuriken {
+    color: rgba(220, 38, 38, 0.30);
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.30));
+}
+
+/* ── Surface overrides — glassmorphism on every dark hex bg ── */
+/* Body & main page bg → transparent so the gradient shows through */
+.light-theme .bg-\[\#08090C\],
+.light-theme .bg-\[\#08090C\]\/90,
+.light-theme .bg-\[\#08090C\]\/95 {
+    background-color: transparent !important;
+}
+
+/* Card surfaces — frosted glass */
+.light-theme .bg-\[\#111216\],
+.light-theme .bg-\[\#0d0e12\],
+.light-theme .bg-\[\#13141A\],
+.light-theme .bg-\[\#15161A\],
+.light-theme .bg-\[\#0B0C10\],
+.light-theme .bg-\[\#1A1C23\] {
+    background-color: rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+}
+.light-theme .bg-\[\#111216\]\/85,
+.light-theme .bg-\[\#111216\]\/40,
+.light-theme .bg-\[\#111216\]\/50,
+.light-theme .bg-\[\#111216\]\/60 {
+    background-color: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+}
+.light-theme .bg-\[\#0a0b0e\] { background-color: rgba(255, 251, 235, 0.6) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+
+/* Navbar — extra heavy glass with brand tint */
+.light-theme nav.fixed.top-0 {
+    background-color: rgba(255, 251, 235, 0.70) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border-color: rgba(245, 158, 11, 0.18) !important;
+    box-shadow: 0 4px 24px -8px rgba(217, 119, 6, 0.12) !important;
+}
+
+/* Black-tinted overlays (modals, reveal) → soft amber tint */
+.light-theme .bg-black\/85,
+.light-theme .bg-black\/80 { background-color: rgba(255, 251, 235, 0.55) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.light-theme .bg-black\/40,
+.light-theme .bg-black\/30,
+.light-theme .bg-black\/20 { background-color: rgba(255, 255, 255, 0.45) !important; }
+
+/* ── Text hierarchy on light backgrounds ── */
+.light-theme .text-white     { color: #0f172a !important; }
+.light-theme .text-slate-100 { color: #0f172a !important; }
+.light-theme .text-slate-200 { color: #1e293b !important; }
+.light-theme .text-slate-300 { color: #334155 !important; }
+.light-theme .text-slate-400 { color: #475569 !important; }
+.light-theme .text-slate-500 { color: #64748b !important; }
+.light-theme .text-slate-600 { color: #94a3b8 !important; }
+.light-theme .text-slate-700 { color: #cbd5e1 !important; }
+
+/* Brand accents stay strong — but slightly darker for contrast */
+.light-theme .text-amber-400 { color: #d97706 !important; }
+.light-theme .text-amber-300 { color: #b45309 !important; }
+.light-theme .text-amber-200 { color: #92400e !important; }
+.light-theme .text-orange-400 { color: #c2410c !important; }
+.light-theme .text-orange-300 { color: #9a3412 !important; }
+.light-theme .text-orange-200 { color: #7c2d12 !important; }
+.light-theme .text-emerald-300 { color: #047857 !important; }
+.light-theme .text-emerald-200 { color: #065f46 !important; }
+.light-theme .text-red-300 { color: #b91c1c !important; }
+.light-theme .text-red-200 { color: #991b1b !important; }
+
+/* ── Borders — fade dark borders to subtle dark ones ── */
+.light-theme [class*="border-white/[0.08]"],
+.light-theme [class*="border-white/[0.06]"],
+.light-theme [class*="border-white/[0.05]"],
+.light-theme [class*="border-white/[0.03]"],
+.light-theme .border-white\/10,
+.light-theme .border-white\/5 {
+    border-color: rgba(217, 119, 6, 0.15) !important;
+}
+.light-theme .border-white\/20 { border-color: rgba(217, 119, 6, 0.25) !important; }
+.light-theme .divide-white\/\[0\.04\] > * + * { border-color: rgba(217, 119, 6, 0.10) !important; }
+.light-theme .divide-white\/\[0\.05\] > * + * { border-color: rgba(217, 119, 6, 0.12) !important; }
+
+/* ── Form inputs ── */
+.light-theme input[type="text"],
+.light-theme input[type="email"],
+.light-theme input[type="password"],
+.light-theme input[type="search"],
+.light-theme input[type="number"],
+.light-theme textarea,
+.light-theme select {
+    background-color: rgba(255, 255, 255, 0.75) !important;
+    color: #0f172a !important;
+    border-color: rgba(217, 119, 6, 0.25) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.light-theme input::placeholder,
+.light-theme textarea::placeholder { color: #cbd5e1 !important; }
+.light-theme input:focus,
+.light-theme textarea:focus,
+.light-theme select:focus { border-color: rgba(217, 119, 6, 0.6) !important; outline: none; }
+
+/* Hover backgrounds — subtle dark on light */
+.light-theme .hover\:bg-white\/5:hover,
+.light-theme .hover\:bg-white\/\[0\.04\]:hover,
+.light-theme .hover\:bg-white\/\[0\.05\]:hover,
+.light-theme .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(217, 119, 6, 0.06) !important; }
+
+/* Solid white surfaces remain (e.g. CTA buttons "bg-white") */
+.light-theme .bg-white { background-color: #fff !important; color: #0f172a !important; }
+.light-theme .bg-white.hover\:bg-slate-200:hover { background-color: #f1f5f9 !important; }
+
+/* Brand button gradients — boost saturation slightly so they pop on light */
+.light-theme .bg-gradient-to-br.from-amber-500.to-orange-600,
+.light-theme .bg-gradient-to-br.from-orange-500.to-amber-600,
+.light-theme .from-amber-500.to-orange-600 {
+    box-shadow: 0 6px 20px -6px rgba(217, 119, 6, 0.45) !important;
+}
+
+/* Selection */
+.light-theme ::selection { background: rgba(217, 119, 6, 0.30) !important; color: #1e293b !important; }
+
+/* ── White overlay backgrounds — invisible on light, give them amber tint ── */
+.light-theme .bg-white\/5,
+.light-theme .bg-white\/\[0\.02\],
+.light-theme .bg-white\/\[0\.03\],
+.light-theme .bg-white\/\[0\.04\] { background-color: rgba(217, 119, 6, 0.05) !important; }
+.light-theme .bg-white\/10 { background-color: rgba(217, 119, 6, 0.10) !important; }
+.light-theme .bg-white\/15 { background-color: rgba(217, 119, 6, 0.14) !important; }
+.light-theme .bg-white\/20 { background-color: rgba(217, 119, 6, 0.18) !important; }
+
+/* ── Brand-tinted soft backgrounds — boost slightly so they show on light ── */
+.light-theme .bg-amber-500\/10,
+.light-theme .bg-amber-500\/\[0\.04\],
+.light-theme .bg-amber-500\/\[0\.06\] { background-color: rgba(245, 158, 11, 0.12) !important; }
+.light-theme .bg-amber-500\/15 { background-color: rgba(245, 158, 11, 0.18) !important; }
+.light-theme .bg-amber-500\/20 { background-color: rgba(245, 158, 11, 0.22) !important; }
+.light-theme .bg-amber-500\/25 { background-color: rgba(245, 158, 11, 0.28) !important; }
+.light-theme .bg-amber-500\/30 { background-color: rgba(245, 158, 11, 0.32) !important; }
+
+.light-theme .bg-orange-500\/10,
+.light-theme .bg-orange-500\/\[0\.04\],
+.light-theme .bg-orange-500\/\[0\.06\] { background-color: rgba(249, 115, 22, 0.12) !important; }
+.light-theme .bg-orange-500\/15 { background-color: rgba(249, 115, 22, 0.18) !important; }
+.light-theme .bg-orange-500\/20 { background-color: rgba(249, 115, 22, 0.22) !important; }
+.light-theme .bg-orange-500\/25 { background-color: rgba(249, 115, 22, 0.28) !important; }
+.light-theme .bg-orange-500\/30 { background-color: rgba(249, 115, 22, 0.32) !important; }
+
+.light-theme .bg-emerald-500\/10,
+.light-theme .bg-emerald-500\/\[0\.04\],
+.light-theme .bg-emerald-500\/\[0\.06\] { background-color: rgba(16, 185, 129, 0.12) !important; }
+.light-theme .bg-emerald-500\/15 { background-color: rgba(16, 185, 129, 0.18) !important; }
+.light-theme .bg-emerald-500\/20 { background-color: rgba(16, 185, 129, 0.22) !important; }
+
+.light-theme .bg-red-500\/10,
+.light-theme .bg-red-500\/15 { background-color: rgba(239, 68, 68, 0.15) !important; }
+
+/* Brand-tinted borders need a small bump too */
+.light-theme [class*="border-amber-500/2"],
+.light-theme [class*="border-amber-500/3"],
+.light-theme [class*="border-amber-400/"] { border-color: rgba(217, 119, 6, 0.45) !important; }
+.light-theme [class*="border-orange-500/2"],
+.light-theme [class*="border-orange-500/3"],
+.light-theme [class*="border-orange-400/"] { border-color: rgba(234, 88, 12, 0.45) !important; }
+.light-theme [class*="border-emerald-500/2"],
+.light-theme [class*="border-emerald-500/3"],
+.light-theme [class*="border-emerald-400/"] { border-color: rgba(5, 150, 105, 0.45) !important; }
+.light-theme [class*="border-red-500/"]  { border-color: rgba(220, 38, 38, 0.40) !important; }
+
+/* ── Shadows — black-tinted shadows look weird on cream; use amber tints ── */
+.light-theme .shadow-2xl   { box-shadow: 0 20px 50px -12px rgba(217, 119, 6, 0.18) !important; }
+.light-theme .shadow-xl    { box-shadow: 0 12px 30px -6px rgba(217, 119, 6, 0.18) !important; }
+.light-theme .shadow-lg    { box-shadow: 0 8px 20px -4px rgba(217, 119, 6, 0.15) !important; }
+.light-theme .shadow-md    { box-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.12) !important; }
+.light-theme [class*="shadow-black/"] { box-shadow: 0 4px 16px -4px rgba(217, 119, 6, 0.18) !important; }
+.light-theme .shadow-inner { box-shadow: inset 0 2px 4px rgba(217, 119, 6, 0.08) !important; }
+
+/* Disabled buttons need slightly stronger opacity to remain readable */
+.light-theme button:disabled,
+.light-theme [disabled],
+.light-theme .disabled\:opacity-40:disabled { opacity: 0.55 !important; }
+
+/* Code blocks should not be invisible */
+.light-theme code,
+.light-theme pre { background-color: rgba(217, 119, 6, 0.10) !important; color: #7c2d12 !important; }
+
+/* Glass card class — explicit utility for new components */
+.glass-card {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 8px 32px -8px rgba(217, 119, 6, 0.12);
+}
+.dark .glass-card,
+:root:not(.light-theme) .glass-card {
+    background: #111216;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+}
+
+/* Autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: #cbd5e1 !important;
+    transition: background-color 5000s ease-in-out 0s;
+    box-shadow: inset 0 0 20px 20px #111216;
+}
+.light-theme input:-webkit-autofill,
+.light-theme input:-webkit-autofill:hover,
+.light-theme input:-webkit-autofill:focus,
+.light-theme input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Shuffle Animations */
+@keyframes shuffleOut {
+    0%   { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+    100% { opacity: 0; transform: scale(0.98) translateY(-12px); filter: blur(12px); }
+}
+@keyframes shuffleIn {
+    0%   { opacity: 0; transform: scale(0.98) translateY(12px); filter: blur(12px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+.animate-shuffle-out { animation: shuffleOut 0.25s cubic-bezier(0.4,0,1,1) forwards; }
+.animate-shuffle-in  { animation: shuffleIn  0.45s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.stagger-0 { animation-delay: 0ms; }
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+.stagger-6 { animation-delay: 240ms; }
+
+/* Marquee */
+@keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.animate-marquee { display: flex; width: fit-content; animation: marquee 30s linear infinite; }
+.animate-marquee:hover { animation-play-state: paused; }
+
+/* Misc */
+.vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
+body { font-family: 'Cairo', sans-serif; }

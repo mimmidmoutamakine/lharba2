@@ -3,20 +3,24 @@
 @section('page-title', 'استيراد مواضيع ' . strtoupper($type))
 
 @php
-    $partOptions = $type === 'lesen'
-        ? [
+    $partOptions = match ($type) {
+        'lesen' => [
             'teil1'            => 'Lesen Teil 1',
             'teil2'            => 'Lesen Teil 2',
             'teil3'            => 'Lesen Teil 3',
             'sprachbausteine1' => 'Sprachbausteine 1',
             'sprachbausteine2' => 'Sprachbausteine 2',
-        ]
-        : [
+        ],
+        'hoeren' => [
             'teil1' => 'Hören Teil 1',
             'teil2' => 'Hören Teil 2',
             'teil3' => 'Hören Teil 3',
             'teil4' => 'Hören Teil 4',
-        ];
+        ],
+        default => [],   // schreiben — single bulk import, no parts
+    };
+    $hasParts    = !empty($partOptions);
+    $supportsXls = in_array($type, ['lesen', 'hoeren'], true);
 @endphp
 
 @section('content')
@@ -67,7 +71,7 @@
 </div>
 @endif
 
-{{-- Tab switcher (lesen / hoeren) --}}
+{{-- Tab switcher (lesen / hoeren / schreiben) --}}
 <div class="flex items-center gap-3 mb-6">
     <a href="{{ route('admin.import.show', 'lesen') }}"
        class="px-4 py-2 rounded-full text-sm font-medium transition-all {{ $type === 'lesen' ? 'bg-amber-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white' }}">
@@ -77,11 +81,16 @@
        class="px-4 py-2 rounded-full text-sm font-medium transition-all {{ $type === 'hoeren' ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white' }}">
         Hören
     </a>
+    <a href="{{ route('admin.import.show', 'schreiben') }}"
+       class="px-4 py-2 rounded-full text-sm font-medium transition-all {{ $type === 'schreiben' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white' }}">
+        Schreiben
+    </a>
 </div>
 
 <div x-data="importPage()" class="space-y-6">
 
-    {{-- Part picker (Teil) --}}
+    @if($hasParts)
+    {{-- Part picker (Teil) — only for Lesen / Hören --}}
     <div class="rounded-2xl border bg-[#111216] border-white/[0.08] p-6">
         <div class="flex items-baseline justify-between mb-3">
             <h2 class="font-bold text-white">اختر الجزء (Teil)</h2>
@@ -98,16 +107,35 @@
             @endforeach
         </div>
     </div>
+    @else
+    {{-- Schreiben — single bulk import notice --}}
+    <div class="rounded-2xl border bg-emerald-500/[0.04] border-emerald-500/20 p-5">
+        <div class="flex items-start gap-3">
+            <div class="w-9 h-9 shrink-0 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-emerald-300"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </div>
+            <div>
+                <div class="font-bold text-white text-sm">استيراد Schreiben</div>
+                <div class="text-xs text-slate-400 mt-1 leading-relaxed">ملف JSON واحد يحتوي على جميع المواضيع — لا يوجد Teil. كل entry فيه: <code class="text-emerald-300">title</code>, <code class="text-emerald-300">scenario</code>, <code class="text-emerald-300">level</code> (B1/B2), <code class="text-emerald-300">type</code>, <code class="text-emerald-300">points[]</code>, <code class="text-emerald-300">minutes</code>.</div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Source picker --}}
     <div class="rounded-2xl border bg-[#111216] border-white/[0.08] p-6">
         <h2 class="font-bold text-white mb-4">اختار طريقة الاستيراد</h2>
-        <div class="grid sm:grid-cols-3 gap-3">
-            @foreach([
-                ['value' => 'json_text', 'label' => 'JSON نص مباشر',  'desc' => 'الصق JSON مباشرة'],
-                ['value' => 'json_file', 'label' => 'ملف JSON',        'desc' => 'ارفع ملف .json'],
-                ['value' => 'excel',     'label' => 'Excel / CSV',     'desc' => 'ارفع .xlsx أو .csv (multi-part)'],
-            ] as $opt)
+        @php
+            $sourceOptions = [
+                ['value' => 'json_text', 'label' => 'JSON نص مباشر', 'desc' => 'الصق JSON مباشرة'],
+                ['value' => 'json_file', 'label' => 'ملف JSON',       'desc' => 'ارفع ملف .json'],
+            ];
+            if ($supportsXls) {
+                $sourceOptions[] = ['value' => 'excel', 'label' => 'Excel / CSV', 'desc' => 'ارفع .xlsx أو .csv (multi-part)'];
+            }
+        @endphp
+        <div class="grid sm:grid-cols-{{ $supportsXls ? 3 : 2 }} gap-3">
+            @foreach($sourceOptions as $opt)
             <button type="button" @click="setSource('{{ $opt['value'] }}')"
                     :class="source === '{{ $opt['value'] }}' ? 'border-amber-500/50 bg-amber-500/10 text-white' : 'border-white/[0.08] text-slate-400 hover:border-white/20 hover:text-slate-300'"
                     class="p-4 rounded-xl border text-right transition-all">
@@ -123,7 +151,8 @@
           class="rounded-2xl border bg-[#111216] border-white/[0.08] p-6 space-y-5">
         @csrf
         <input type="hidden" name="source" :value="source">
-        <input type="hidden" name="part"   :value="part">
+        @if($hasParts)
+        <input type="hidden" name="part" :value="part">
 
         {{-- Active part badge --}}
         <div class="flex items-center justify-between pb-3 border-b border-white/[0.05]">
@@ -133,6 +162,7 @@
             </div>
             <span class="text-xs text-slate-600" x-text="'column: ' + part"></span>
         </div>
+        @endif
 
         {{-- JSON Text — only rendered when active so it's the only field submitted --}}
         <template x-if="source === 'json_text'">

@@ -12,13 +12,30 @@ class TopicImportController extends Controller
 
     public function showImport(string $type)
     {
-        abort_unless(in_array($type, ['lesen', 'hoeren']), 404);
+        abort_unless(in_array($type, ['lesen', 'hoeren', 'schreiben']), 404);
         return view('admin.import', compact('type'));
     }
 
     public function handleImport(Request $request, string $type)
     {
-        abort_unless(in_array($type, ['lesen', 'hoeren']), 404);
+        abort_unless(in_array($type, ['lesen', 'hoeren', 'schreiben']), 404);
+
+        // Schreiben has no parts — single bulk JSON of full topics
+        if ($type === 'schreiben') {
+            $request->validate([
+                'source'    => 'required|in:json_text,json_file',
+                'json_text' => 'required_if:source,json_text|nullable|string',
+                'file'      => 'required_if:source,json_file|nullable|file|max:10240',
+            ]);
+
+            $json = $request->source === 'json_text'
+                ? $request->json_text
+                : file_get_contents($request->file('file')->getRealPath());
+
+            $result = $this->importer->importSchreibenFromJson($json);
+            session()->flash('import_result', $result);
+            return redirect()->route('admin.import.show', $type);
+        }
 
         $allowedParts = $type === 'lesen'
             ? ['teil1', 'teil2', 'teil3', 'sprachbausteine1', 'sprachbausteine2']

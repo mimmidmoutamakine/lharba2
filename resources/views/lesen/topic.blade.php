@@ -372,7 +372,7 @@
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="sheetOpen = false"
-             class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
+             class="fixed inset-0 z-[75] lg:hidden bg-black/70"></div>
 
         {{-- MOBILE: Bottom sheet panel --}}
         <div x-show="sheetOpen"
@@ -671,7 +671,7 @@
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="qSheetOpen = false"
-             class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
+             class="fixed inset-0 z-[75] lg:hidden bg-black/70"></div>
 
         {{-- MOBILE: Bottom sheet panel (Fragen) --}}
         <div x-show="qSheetOpen"
@@ -1088,7 +1088,7 @@
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="t3SheetOpen = false"
-             class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
+             class="fixed inset-0 z-[75] lg:hidden bg-black/70"></div>
 
         {{-- MOBILE: Ads bottom sheet (compact, expandable cards) --}}
         <div x-show="t3SheetOpen"
@@ -1392,7 +1392,7 @@
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  @click="sb1SheetOpen = false; activeBlank = null"
-                 class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
+                 class="fixed inset-0 z-[75] lg:hidden bg-black/70"></div>
 
             <div x-show="sb1SheetOpen"
                  x-cloak
@@ -1716,7 +1716,7 @@
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  @click="sb2SheetOpen = false; activeBlank = null"
-                 class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
+                 class="fixed inset-0 z-[75] lg:hidden bg-black/70"></div>
 
             <div x-show="sb2SheetOpen"
                  x-cloak

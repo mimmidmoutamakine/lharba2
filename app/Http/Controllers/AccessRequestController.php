@@ -74,24 +74,32 @@ class AccessRequestController extends Controller
      */
     public function poll(Request $request)
     {
-        $user = $request->user();
-        $req  = $user->pendingWelcomeRequest();
+        // Wrap everything — never let this endpoint 500.
+        // If anything goes wrong (missing migration, DB blip, etc.) just return
+        // welcome:false so the client keeps polling silently.
+        try {
+            $user = $request->user();
+            $req  = $user?->pendingWelcomeRequest();
 
-        if (! $req) {
+            if (! $req) {
+                return response()->json(['welcome' => false]);
+            }
+
+            return response()->json([
+                'welcome' => true,
+                'request' => [
+                    'id'             => $req->id,
+                    'language'       => $req->language,
+                    'language_label' => $req->languageLabel(),
+                    'exam'           => $req->exam,
+                    'level'          => $req->level,
+                    'decided_at'     => $req->decided_at?->toIso8601String(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('access.poll failed: ' . $e->getMessage());
             return response()->json(['welcome' => false]);
         }
-
-        return response()->json([
-            'welcome' => true,
-            'request' => [
-                'id'             => $req->id,
-                'language'       => $req->language,
-                'language_label' => $req->languageLabel(),
-                'exam'           => $req->exam,
-                'level'          => $req->level,
-                'decided_at'     => $req->decided_at?->toIso8601String(),
-            ],
-        ]);
     }
 
     /**

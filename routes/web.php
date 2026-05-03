@@ -61,11 +61,11 @@ Route::middleware('auth')->group(function () {
 
     // Access requests (user-facing)
     Route::get('/access/new',     [AccessRequestController::class, 'create'])->name('access.create');
-    Route::post('/access/new',    [AccessRequestController::class, 'store'])->middleware('throttle:5,1')->name('access.store');
+    Route::post('/access/new',    [AccessRequestController::class, 'store'])->middleware('throttle:30,1')->name('access.store');
     Route::get('/access/pending', [AccessRequestController::class, 'pending'])->name('access.pending');
 
     // Auto-welcome polling — JS hits poll every ~20s, markWelcomed once user dismisses.
-    Route::get('/access/poll',     [AccessRequestController::class, 'poll'])->middleware('throttle:60,1')->name('access.poll');
+    Route::get('/access/poll',     [AccessRequestController::class, 'poll'])->middleware('throttle:120,1')->name('access.poll');
     Route::post('/access/welcomed', [AccessRequestController::class, 'markWelcomed'])->name('access.welcomed');
 });
 
@@ -118,8 +118,10 @@ Route::middleware(['auth', 'has.access'])->group(function () {
 Route::get('/billing', fn () => view('billing'))->name('billing');
 
 // ── Auth ──────────────────────────────────────────────────────
+// Throttles: per-IP, generous enough for shared networks (school WiFi → many students same NAT IP)
+// but still hard to brute-force a min-8-char password.
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
-Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:5,1']);
+Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:30,1']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register')->middleware('guest');
-Route::post('/register', [AuthController::class, 'register'])->middleware(['guest', 'throttle:5,1']);
+Route::post('/register', [AuthController::class, 'register'])->middleware(['guest', 'throttle:30,1']);

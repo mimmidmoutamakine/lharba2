@@ -416,38 +416,59 @@ function welcomeWatcher() {
     return {
         data: null,
         _interval: null,
+        _lastPollAt: 0,
+        _stopped: false,
         _csrf: document.querySelector('meta[name="csrf-token"]')?.content || '',
+        // Tunables
+        _intervalMs: 30000,   // poll every 30s while tab is visible
+        _minGapMs:    8000,   // hard floor — never re-poll faster than this
 
         start() {
-            // Poll every 20s while page is visible. Skip when tab is in background.
-            this._poll();
+            // First poll, slight delay so we don't compete with the page's other on-load fetches.
+            setTimeout(() => this._poll(), 1500);
+
             this._interval = setInterval(() => {
+                if (this._stopped) return;
                 if (document.visibilityState === 'visible') this._poll();
-            }, 20000);
-            // Also re-check immediately when user returns to the tab.
+            }, this._intervalMs);
+
+            // No burst on tab focus — only re-poll if it's been a while.
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible' && !this.data) this._poll();
+                if (this._stopped || this.data) return;
+                if (document.visibilityState !== 'visible') return;
+                if (Date.now() - this._lastPollAt < this._minGapMs) return;
+                this._poll();
             });
         },
 
         async _poll() {
+            if (this._stopped) return;
+            // Hard rate-limit on the client too — guarantees we never burst.
+            if (Date.now() - this._lastPollAt < this._minGapMs) return;
+            this._lastPollAt = Date.now();
+
             try {
                 const res = await fetch('{{ route('access.poll') }}', {
                     headers: { 'Accept': 'application/json' },
                     credentials: 'same-origin',
                 });
+                // If the server says "stop spamming me", back off completely until next page load.
+                if (res.status === 429) { this._stop(); return; }
                 if (!res.ok) return;
                 const json = await res.json();
                 if (json.welcome && json.request) {
                     this.data = json.request;
-                    // Stop polling — we found it
-                    if (this._interval) { clearInterval(this._interval); this._interval = null; }
+                    this._stop();
                 }
             } catch (e) { /* network blip — try again next tick */ }
         },
 
+        _stop() {
+            this._stopped = true;
+            if (this._interval) { clearInterval(this._interval); this._interval = null; }
+        },
+
         async dismiss() {
-            const payload = this.data;
             this.data = null;
             try {
                 await fetch('{{ route('access.welcomed') }}', {

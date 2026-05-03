@@ -57,15 +57,20 @@ class User extends Authenticatable
     /**
      * Latest approved access request that the user has NOT yet been welcomed for.
      * The polling endpoint uses this to push the welcome overlay the moment an
-     * admin approves the request.
+     * admin approves the request. Returns null if the welcomed_at column hasn't
+     * been migrated yet (graceful degradation in production before migrate runs).
      */
     public function pendingWelcomeRequest(): ?AccessRequest
     {
-        return $this->accessRequests()
-            ->where('status', AccessRequest::STATUS_APPROVED)
-            ->whereNull('welcomed_at')
-            ->orderByDesc('decided_at')
-            ->first();
+        try {
+            return $this->accessRequests()
+                ->where('status', AccessRequest::STATUS_APPROVED)
+                ->whereNull('welcomed_at')
+                ->orderByDesc('decided_at')
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /** Language code the user is allowed to see content for. Admins see everything (treated as 'de'). */

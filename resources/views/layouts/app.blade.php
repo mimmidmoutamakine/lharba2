@@ -334,6 +334,144 @@ window.TopicStatus = (function () {
 })();
 </script>
 
+@auth
+{{-- ── Auto welcome overlay — pops up the moment admin approves the user's access request ── --}}
+<div id="welcome-overlay-root" x-data="welcomeWatcher()" x-init="start()" x-cloak>
+    <template x-if="data">
+        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             @keydown.escape.window="dismiss()">
+            {{-- Backdrop --}}
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="dismiss()"></div>
+
+            {{-- Card --}}
+            <div class="relative z-10 w-full max-w-lg rounded-3xl border border-amber-500/40 bg-gradient-to-br from-[#111216] via-[#0d0e12] to-[#111216] overflow-hidden shadow-2xl shadow-amber-500/20"
+                 x-transition:enter="transition ease-out duration-400 delay-100"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+
+                {{-- Halo --}}
+                <div class="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-amber-500/20 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-orange-500/20 blur-3xl pointer-events-none"></div>
+
+                <div class="relative p-6 md:p-8 text-center" dir="rtl">
+                    {{-- Animated check + shuriken --}}
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 mb-5 shadow-xl shadow-amber-500/40 relative">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span class="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-[#0d0e12] border-2 border-amber-400 flex items-center justify-center">
+                            <svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor" class="text-amber-300"><path d="M50 4 L57 38 L93 32 L66 56 L96 78 L60 70 L50 96 L40 70 L4 78 L34 56 L7 32 L43 38 Z"/></svg>
+                        </span>
+                    </div>
+
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">🎉 مرحبا بيك فالهربة!</h2>
+                    <p class="text-slate-400 text-sm md:text-base mb-5">طلبك تصادق عليه. دبا تقدر تبدا التحضير.</p>
+
+                    {{-- Granted access pill --}}
+                    <div class="inline-flex items-center flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 mb-6 max-w-full">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">الوصول</span>
+                        <span class="text-sm font-bold text-white" x-text="data.language_label"></span>
+                        <span class="text-slate-600">·</span>
+                        <span class="text-sm font-bold text-amber-300" x-text="data.exam"></span>
+                        <span class="text-slate-600">·</span>
+                        <span class="text-sm font-bold text-orange-300" x-text="data.level"></span>
+                    </div>
+
+                    {{-- Quick tour --}}
+                    <div class="grid grid-cols-2 gap-2 mb-6 text-right">
+                        <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">📚 Lesen / Hören</div>
+                            <div class="text-xs text-slate-300 leading-snug">تمارين كاملة بكل الـ Teil</div>
+                        </div>
+                        <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-orange-400 mb-1">✍️ Schreiben AI</div>
+                            <div class="text-xs text-slate-300 leading-snug">تصحيح بمعايير telc</div>
+                        </div>
+                        <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">🎯 خطتك</div>
+                            <div class="text-xs text-slate-300 leading-snug">تتبع شنو حفظت وشنو خاصك</div>
+                        </div>
+                        <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">⚡ Beispiel Generator</div>
+                            <div class="text-xs text-slate-300 leading-snug">نماذج Schreiben جاهزة</div>
+                        </div>
+                    </div>
+
+                    {{-- CTAs --}}
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button @click="goToContent()" class="flex-1 px-5 py-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-sm shadow-lg shadow-amber-500/30 hover:shadow-xl active:scale-95 transition-all">
+                            ابدا الدراسة دبا
+                        </button>
+                        <button @click="dismiss()" class="px-5 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 text-sm transition-all">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+function welcomeWatcher() {
+    return {
+        data: null,
+        _interval: null,
+        _csrf: document.querySelector('meta[name="csrf-token"]')?.content || '',
+
+        start() {
+            // Poll every 20s while page is visible. Skip when tab is in background.
+            this._poll();
+            this._interval = setInterval(() => {
+                if (document.visibilityState === 'visible') this._poll();
+            }, 20000);
+            // Also re-check immediately when user returns to the tab.
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && !this.data) this._poll();
+            });
+        },
+
+        async _poll() {
+            try {
+                const res = await fetch('{{ route('access.poll') }}', {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                });
+                if (!res.ok) return;
+                const json = await res.json();
+                if (json.welcome && json.request) {
+                    this.data = json.request;
+                    // Stop polling — we found it
+                    if (this._interval) { clearInterval(this._interval); this._interval = null; }
+                }
+            } catch (e) { /* network blip — try again next tick */ }
+        },
+
+        async dismiss() {
+            const payload = this.data;
+            this.data = null;
+            try {
+                await fetch('{{ route('access.welcomed') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': this._csrf,
+                    },
+                    credentials: 'same-origin',
+                });
+            } catch (e) {}
+        },
+
+        goToContent() {
+            const target = '{{ route('lesen.index') }}';
+            this.dismiss();
+            // small delay so the welcomed POST fires before navigation
+            setTimeout(() => { window.location.href = target; }, 100);
+        },
+    };
+}
+</script>
+@endauth
+
 @stack('scripts')
 </body>
 </html>

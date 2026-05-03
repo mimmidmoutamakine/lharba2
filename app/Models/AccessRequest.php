@@ -31,11 +31,12 @@ class AccessRequest extends Model
 
     protected $fillable = [
         'user_id', 'language', 'exam', 'level',
-        'status', 'approved_by', 'decided_at', 'admin_note',
+        'status', 'approved_by', 'decided_at', 'welcomed_at', 'admin_note',
     ];
 
     protected $casts = [
-        'decided_at' => 'datetime',
+        'decided_at'  => 'datetime',
+        'welcomed_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

@@ -66,4 +66,46 @@ class AccessRequestController extends Controller
             'current' => $user->currentAccess(),
         ]);
     }
+
+    /**
+     * Lightweight polling endpoint — the layout's JS calls this every ~20 seconds.
+     * Returns whether the user has a freshly-approved access request that hasn't
+     * been "welcomed" yet, so the overlay can pop up automatically.
+     */
+    public function poll(Request $request)
+    {
+        $user = $request->user();
+        $req  = $user->pendingWelcomeRequest();
+
+        if (! $req) {
+            return response()->json(['welcome' => false]);
+        }
+
+        return response()->json([
+            'welcome' => true,
+            'request' => [
+                'id'             => $req->id,
+                'language'       => $req->language,
+                'language_label' => $req->languageLabel(),
+                'exam'           => $req->exam,
+                'level'          => $req->level,
+                'decided_at'     => $req->decided_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Mark the user's pending welcome as seen so the overlay stops appearing.
+     */
+    public function markWelcomed(Request $request)
+    {
+        $user = $request->user();
+        $req  = $user->pendingWelcomeRequest();
+
+        if ($req) {
+            $req->update(['welcomed_at' => now()]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
 }

@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/access/new',     [AccessRequestController::class, 'create'])->name('access.create');
     Route::post('/access/new',    [AccessRequestController::class, 'store'])->middleware('throttle:5,1')->name('access.store');
     Route::get('/access/pending', [AccessRequestController::class, 'pending'])->name('access.pending');
+
+    // Auto-welcome polling — JS hits poll every ~20s, markWelcomed once user dismisses.
+    Route::get('/access/poll',     [AccessRequestController::class, 'poll'])->middleware('throttle:60,1')->name('access.poll');
+    Route::post('/access/welcomed', [AccessRequestController::class, 'markWelcomed'])->name('access.welcomed');
 });
 
 // ── Content (auth + approved access required) ────────────────

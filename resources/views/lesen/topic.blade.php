@@ -383,7 +383,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
-             class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#111216] rounded-t-2xl border-t border-white/10 overflow-hidden touch-pan-y"
+             class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#111216] rounded-t-2xl border-t border-white/10 overflow-hidden touch-pan-y"
              style="max-height:75vh">
             <div style="max-height:75vh; overflow-y:auto; overscroll-behavior:contain">
                 {{-- Handle + title --}}
@@ -422,7 +422,7 @@
         </div>
 
         {{-- MOBILE: Fixed text navigator (shown in texts view only) --}}
-        <div x-show="mobileView === 'texts'"
+        <div x-show="mobileView === 'texts' && !sheetOpen"
              x-cloak
              class="fixed top-16 left-0 right-0 z-40 lg:hidden bg-[#08090C]/95 backdrop-blur-md border-b border-white/[0.08] px-4 py-2">
             <div class="flex items-center justify-between gap-1.5">
@@ -447,7 +447,8 @@
         </div>
 
         {{-- MOBILE: Sticky bottom bar --}}
-        <div class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
+        <div x-show="!sheetOpen" x-cloak
+             class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
             <template x-if="!submitted">
                 <div class="flex gap-3">
                     <button @click="mobileView = mobileView === 'texts' ? 'titles' : 'texts'"
@@ -625,7 +626,7 @@
         </div>{{-- end mobile main container --}}
 
         {{-- MOBILE: Fixed top navigator — paragraph chips --}}
-        <div x-cloak
+        <div x-show="!qSheetOpen" x-cloak
              class="fixed top-16 left-0 right-0 z-40 lg:hidden bg-[#08090C]/95 backdrop-blur-md border-b border-white/[0.08] px-3 py-2">
             <div class="flex items-center gap-1.5 overflow-x-auto" dir="ltr">
                 <span class="shrink-0 text-[9px] font-black uppercase tracking-widest text-slate-600 px-1">¶</span>
@@ -639,7 +640,8 @@
         </div>
 
         {{-- MOBILE: Sticky bottom bar (always visible above the text) --}}
-        <div class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
+        <div x-show="!qSheetOpen" x-cloak
+             class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
             <template x-if="!submitted">
                 <button @click="qSheetOpen = true"
                         class="btn-shine w-full py-3 rounded-xl bg-amber-600 active:bg-amber-500 text-white text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
@@ -682,7 +684,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
-             class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+             class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
              style="height:88vh">
 
             {{-- Sticky header: handle + title + close + question chips --}}
@@ -1037,7 +1039,7 @@
         </div>
 
         {{-- MOBILE: Top fixed nav — situation number chips --}}
-        <div x-cloak
+        <div x-show="!t3SheetOpen" x-cloak
              class="fixed top-16 left-0 right-0 z-40 lg:hidden bg-[#08090C]/95 backdrop-blur-md border-b border-white/[0.08] px-3 py-2">
             <div class="flex items-center justify-between gap-1.5">
                 <template x-for="s in parts.teil3.situations" :key="s.id">
@@ -1061,7 +1063,8 @@
         </div>
 
         {{-- MOBILE: Sticky bottom bar --}}
-        <div class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
+        <div x-show="!t3SheetOpen" x-cloak
+             class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
             <template x-if="!submitted">
                 <button @click="submitAnswers()"
                         :disabled="Object.keys(answers).length < (parts.teil3.situations?.length ?? 0)"
@@ -1099,7 +1102,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
-             class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+             class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
              style="height:88vh">
 
             {{-- Sticky header: handle + active situation summary + close --}}
@@ -1402,7 +1405,7 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="translate-y-0"
                  x-transition:leave-end="translate-y-full"
-                 class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+                 class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
                  style="max-height:80vh">
 
                 <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-4 pb-3">
@@ -1481,7 +1484,8 @@
             </div>
 
             {{-- Mobile sticky bottom bar --}}
-            <div class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
+            <div x-show="!sb1SheetOpen" x-cloak
+                 class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
                 <template x-if="!submitted">
                     <button @click="submitAnswers()"
                             :disabled="Object.keys(answers).length < total"
@@ -1726,7 +1730,7 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="translate-y-0"
                  x-transition:leave-end="translate-y-full"
-                 class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+                 class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
                  style="max-height:80vh">
 
                 <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-4 pb-3">
@@ -1806,7 +1810,8 @@
             </div>
 
             {{-- Mobile sticky bottom bar --}}
-            <div class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
+            <div x-show="!sb2SheetOpen" x-cloak
+                 class="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3 bg-[#08090C]/95 backdrop-blur border-t border-white/[0.08]">
                 <template x-if="!submitted">
                     <button @click="submitAnswers()"
                             :disabled="Object.keys(answers).length < total"

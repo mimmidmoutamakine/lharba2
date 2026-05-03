@@ -10,6 +10,14 @@
          'sprachbausteine1'=> $topic->sprachbausteine1,
          'sprachbausteine2'=> $topic->sprachbausteine2,
      ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }})"
+     x-effect="_lockBodyScroll(t3SheetOpen || sheetOpen || qSheetOpen || sb1SheetOpen || sb2SheetOpen)"
+     @keydown.escape.window="
+        if (t3SheetOpen)  t3SheetOpen  = false;
+        if (sheetOpen)    sheetOpen    = false;
+        if (qSheetOpen)   qSheetOpen   = false;
+        if (sb1SheetOpen) { sb1SheetOpen = false; activeBlank = null; }
+        if (sb2SheetOpen) { sb2SheetOpen = false; activeBlank = null; }
+     "
 >
     @php $partLabels = ['teil1'=>'Teil 1','teil2'=>'Teil 2','teil3'=>'Teil 3','sprachbausteine1'=>'Sprachbausteine 1','sprachbausteine2'=>'Sprachbausteine 2']; @endphp
 
@@ -86,7 +94,20 @@
 
     {{-- ── TEIL 1 ─────────────────────────────────────────────────── --}}
     <div x-show="activePart === 'teil1'" x-cloak>
-      <template x-if="parts.teil1">
+      {{-- Friendly fallback if data is missing or malformed --}}
+      <template x-if="!parts.teil1 || !Array.isArray(parts.teil1.texts) || !Array.isArray(parts.teil1.headlines)">
+        <div class="rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-6 text-center" dir="rtl">
+            <div class="text-amber-300 font-bold mb-2">المحتوى ديال Teil 1 غير متوفر لهاد الموضوع</div>
+            <div class="text-sm text-slate-400 mb-4">إما ما تمّش رفع البيانات (texts + headlines + correctAnswers)، أو الشكل ديال JSON غير متوافق.</div>
+            <a href="{{ route('lesen.index', ['teil' => 'teil1']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold transition-all">رجوع للائحة</a>
+            <details class="mt-4 text-left text-[11px] text-slate-600" dir="ltr">
+                <summary class="cursor-pointer">debug · raw data</summary>
+                <pre class="mt-2 p-3 rounded bg-black/40 overflow-x-auto whitespace-pre-wrap" x-text="JSON.stringify(parts.teil1, null, 2).slice(0, 500)"></pre>
+            </details>
+        </div>
+      </template>
+
+      <template x-if="parts.teil1 && Array.isArray(parts.teil1.texts) && Array.isArray(parts.teil1.headlines)">
       <div>
 
         {{-- Instructions --}}
@@ -343,26 +364,27 @@
 
         {{-- MOBILE: Bottom sheet backdrop --}}
         <div x-show="sheetOpen"
-             x-transition:enter="transition-opacity duration-300"
+             x-cloak
+             x-transition:enter="transition-opacity duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity duration-200"
+             x-transition:leave="transition-opacity duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="sheetOpen = false"
-             class="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm"
-             style="display:none"></div>
+             class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
 
         {{-- MOBILE: Bottom sheet panel --}}
         <div x-show="sheetOpen"
-             x-transition:enter="transition ease-[cubic-bezier(0.32,0.72,0,1)] duration-350"
+             x-cloak
+             x-transition:enter="transition ease-out duration-250"
              x-transition:enter-start="translate-y-full"
              x-transition:enter-end="translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
-             class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#111216] rounded-t-2xl border-t border-white/10 overflow-hidden"
-             style="max-height:75vh; display:none">
+             class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#111216] rounded-t-2xl border-t border-white/10 overflow-hidden touch-pan-y"
+             style="max-height:75vh">
             <div style="max-height:75vh; overflow-y:auto; overscroll-behavior:contain">
                 {{-- Handle + title --}}
                 <div class="sticky top-0 bg-[#111216] pt-3 pb-2 px-4 border-b border-white/[0.06]">
@@ -641,26 +663,27 @@
 
         {{-- MOBILE: Bottom sheet backdrop (questions) --}}
         <div x-show="qSheetOpen"
-             x-transition:enter="transition-opacity duration-300"
+             x-cloak
+             x-transition:enter="transition-opacity duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity duration-200"
+             x-transition:leave="transition-opacity duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="qSheetOpen = false"
-             class="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm"
-             style="display:none"></div>
+             class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
 
         {{-- MOBILE: Bottom sheet panel (Fragen) --}}
         <div x-show="qSheetOpen"
-             x-transition:enter="transition ease-[cubic-bezier(0.32,0.72,0,1)] duration-350"
+             x-cloak
+             x-transition:enter="transition ease-out duration-250"
              x-transition:enter-start="translate-y-full"
              x-transition:enter-end="translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
-             class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col"
-             style="height:88vh; display:none">
+             class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+             style="height:88vh">
 
             {{-- Sticky header: handle + title + close + question chips --}}
             <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-3">
@@ -836,7 +859,8 @@
                             </div>
                         </button>
                         <div class="px-4 py-3 text-sm text-slate-300 leading-[1.75] whitespace-pre-line" x-text="ad.text"></div>
-                        <template x-if="ad.summary">
+                        {{-- Translation only after submission (so users can't peek at the answer) --}}
+                        <template x-if="ad.summary && submitted">
                             <div x-data="{ open: false }" class="border-t border-white/[0.05]">
                                 <button @click.stop="open = !open" class="w-full px-4 py-2 flex items-center gap-1 text-xs text-slate-600 hover:text-amber-400 transition-colors" dir="rtl">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="open?'rotate-180':''" class="transition-transform"><path d="m6 9 6 6 6-6"/></svg>
@@ -1056,26 +1080,27 @@
 
         {{-- MOBILE: Ads sheet backdrop --}}
         <div x-show="t3SheetOpen"
-             x-transition:enter="transition-opacity duration-300"
+             x-cloak
+             x-transition:enter="transition-opacity duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity duration-200"
+             x-transition:leave="transition-opacity duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="t3SheetOpen = false"
-             class="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm"
-             style="display:none"></div>
+             class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
 
         {{-- MOBILE: Ads bottom sheet (compact, expandable cards) --}}
         <div x-show="t3SheetOpen"
-             x-transition:enter="transition ease-[cubic-bezier(0.32,0.72,0,1)] duration-350"
+             x-cloak
+             x-transition:enter="transition ease-out duration-250"
              x-transition:enter-start="translate-y-full"
              x-transition:enter-end="translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
-             class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col"
-             style="height:88vh; display:none">
+             class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+             style="height:88vh">
 
             {{-- Sticky header: handle + active situation summary + close --}}
             <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-4 pb-3">
@@ -1135,10 +1160,10 @@
                             </button>
                         </div>
 
-                        {{-- Expanded body: full text + Arabic summary --}}
+                        {{-- Expanded body: full text always; Arabic translation only after submission --}}
                         <div x-show="t3ExpandedAd === ad.id" x-collapse>
                             <div class="px-4 pt-1 pb-3 text-sm text-slate-200 leading-[1.7] whitespace-pre-line border-t border-white/[0.04]" x-text="ad.text"></div>
-                            <template x-if="ad.summary">
+                            <template x-if="ad.summary && submitted">
                                 <div class="px-4 pb-3 pt-2 text-xs text-slate-400 leading-relaxed whitespace-pre-line border-t border-white/[0.04]" dir="rtl" x-text="ad.summary"></div>
                             </template>
                         </div>
@@ -1359,25 +1384,26 @@
 
             {{-- MOBILE: bottom sheet — picker for the active blank --}}
             <div x-show="sb1SheetOpen"
-                 x-transition:enter="transition-opacity duration-300"
+                 x-cloak
+                 x-transition:enter="transition-opacity duration-200"
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition-opacity duration-200"
+                 x-transition:leave="transition-opacity duration-150"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  @click="sb1SheetOpen = false; activeBlank = null"
-                 class="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm"
-                 style="display:none"></div>
+                 class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
 
             <div x-show="sb1SheetOpen"
-                 x-transition:enter="transition ease-[cubic-bezier(0.32,0.72,0,1)] duration-350"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-250"
                  x-transition:enter-start="translate-y-full"
                  x-transition:enter-end="translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="translate-y-0"
                  x-transition:leave-end="translate-y-full"
-                 class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col"
-                 style="max-height:80vh; display:none">
+                 class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+                 style="max-height:80vh">
 
                 <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-4 pb-3">
                     <div class="w-10 h-1 rounded-full bg-white/20 mx-auto mb-3"></div>
@@ -1682,25 +1708,26 @@
 
             {{-- MOBILE: bottom sheet — pick a word from the pool --}}
             <div x-show="sb2SheetOpen"
-                 x-transition:enter="transition-opacity duration-300"
+                 x-cloak
+                 x-transition:enter="transition-opacity duration-200"
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition-opacity duration-200"
+                 x-transition:leave="transition-opacity duration-150"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  @click="sb2SheetOpen = false; activeBlank = null"
-                 class="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm"
-                 style="display:none"></div>
+                 class="fixed inset-0 z-[55] lg:hidden bg-black/70"></div>
 
             <div x-show="sb2SheetOpen"
-                 x-transition:enter="transition ease-[cubic-bezier(0.32,0.72,0,1)] duration-350"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-250"
                  x-transition:enter-start="translate-y-full"
                  x-transition:enter-end="translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="translate-y-0"
                  x-transition:leave-end="translate-y-full"
-                 class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col"
-                 style="max-height:80vh; display:none">
+                 class="fixed bottom-0 left-0 right-0 z-[60] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
+                 style="max-height:80vh">
 
                 <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-4 pb-3">
                     <div class="w-10 h-1 rounded-full bg-white/20 mx-auto mb-3"></div>
@@ -2213,14 +2240,23 @@ function lesenTopic(parts, initialPart, timerEnabled) {
             this.t3SheetSituation = situationId;
             this.t3ExpandedAd     = null;
             this.t3SheetOpen      = true;
+            this._lockBodyScroll(true);
         },
 
         pickAdForSheetSituation(adId) {
             if (this.t3SheetSituation === null) return;
             this.answers[this.t3SheetSituation] = adId;
             this.answers     = { ...this.answers };
-            this.t3SheetOpen = false;
+            this.t3SheetOpen  = false;
             this.t3ExpandedAd = null;
+            this._lockBodyScroll(false);
+        },
+
+        _lockBodyScroll(locked) {
+            try {
+                document.body.style.overflow = locked ? 'hidden' : '';
+                document.body.style.touchAction = locked ? 'none' : '';
+            } catch (e) {}
         },
 
         toggleAdExpand(adId) {

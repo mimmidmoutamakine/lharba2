@@ -20,8 +20,9 @@ class TopicImportController extends Controller
     {
         abort_unless(in_array($type, ['lesen', 'hoeren', 'schreiben']), 404);
 
-        // Schreiben has no parts — single bulk JSON of full topics
-        if ($type === 'schreiben') {
+        // Schreiben & Hören both work as single bulk imports — each entry is one full topic.
+        // Lesen still uses the per-Teil column update flow below.
+        if (in_array($type, ['schreiben', 'hoeren'], true)) {
             $request->validate([
                 'source'    => 'required|in:json_text,json_file',
                 'json_text' => 'required_if:source,json_text|nullable|string',
@@ -32,14 +33,16 @@ class TopicImportController extends Controller
                 ? $request->json_text
                 : file_get_contents($request->file('file')->getRealPath());
 
-            $result = $this->importer->importSchreibenFromJson($json);
+            $result = $type === 'schreiben'
+                ? $this->importer->importSchreibenFromJson($json)
+                : $this->importer->importHoerenFromJson($json);
+
             session()->flash('import_result', $result);
             return redirect()->route('admin.import.show', $type);
         }
 
-        $allowedParts = $type === 'lesen'
-            ? ['teil1', 'teil2', 'teil3', 'sprachbausteine1', 'sprachbausteine2']
-            : ['teil1', 'teil2', 'teil3', 'teil4'];
+        // Below this point, only Lesen reaches us — keep the per-Teil column flow.
+        $allowedParts = ['teil1', 'teil2', 'teil3', 'sprachbausteine1', 'sprachbausteine2'];
 
         $request->validate([
             'source'    => 'required|in:json_text,json_file,excel',

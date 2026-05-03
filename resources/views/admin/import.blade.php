@@ -3,24 +3,17 @@
 @section('page-title', 'استيراد مواضيع ' . strtoupper($type))
 
 @php
-    $partOptions = match ($type) {
-        'lesen' => [
-            'teil1'            => 'Lesen Teil 1',
-            'teil2'            => 'Lesen Teil 2',
-            'teil3'            => 'Lesen Teil 3',
-            'sprachbausteine1' => 'Sprachbausteine 1',
-            'sprachbausteine2' => 'Sprachbausteine 2',
-        ],
-        'hoeren' => [
-            'teil1' => 'Hören Teil 1',
-            'teil2' => 'Hören Teil 2',
-            'teil3' => 'Hören Teil 3',
-            'teil4' => 'Hören Teil 4',
-        ],
-        default => [],   // schreiben — single bulk import, no parts
-    };
+    // Only Lesen has multiple Teils per topic.
+    // Hören & Schreiben: each entry = one full topic (teil is just a column on Hören).
+    $partOptions = $type === 'lesen' ? [
+        'teil1'            => 'Lesen Teil 1',
+        'teil2'            => 'Lesen Teil 2',
+        'teil3'            => 'Lesen Teil 3',
+        'sprachbausteine1' => 'Sprachbausteine 1',
+        'sprachbausteine2' => 'Sprachbausteine 2',
+    ] : [];
     $hasParts    = !empty($partOptions);
-    $supportsXls = in_array($type, ['lesen', 'hoeren'], true);
+    $supportsXls = $type === 'lesen';
 @endphp
 
 @section('content')
@@ -108,15 +101,29 @@
         </div>
     </div>
     @else
-    {{-- Schreiben — single bulk import notice --}}
-    <div class="rounded-2xl border bg-emerald-500/[0.04] border-emerald-500/20 p-5">
+    {{-- Hören & Schreiben — single bulk import notice --}}
+    @php
+        $tone = $type === 'schreiben' ? 'emerald' : 'orange';
+        $title = $type === 'schreiben' ? 'استيراد Schreiben' : 'استيراد Hören';
+        $shape = $type === 'schreiben'
+            ? '<code class="text-emerald-300">title</code>, <code class="text-emerald-300">scenario</code>, <code class="text-emerald-300">level</code> (B1/B2), <code class="text-emerald-300">type</code>, <code class="text-emerald-300">points[]</code>, <code class="text-emerald-300">minutes</code>'
+            : '<code class="text-orange-300">title</code>, <code class="text-orange-300">level</code> (B1/B2), <code class="text-orange-300">teil</code> (1-4), <code class="text-orange-300">audio_url</code>, <code class="text-orange-300">duration</code>, <code class="text-orange-300">statements[]</code>, <code class="text-orange-300">correct_numbers[]</code>, <code class="text-orange-300">flashcards[]</code>';
+    @endphp
+    <div class="rounded-2xl border bg-{{ $tone }}-500/[0.04] border-{{ $tone }}-500/20 p-5">
         <div class="flex items-start gap-3">
-            <div class="w-9 h-9 shrink-0 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-emerald-300"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <div class="w-9 h-9 shrink-0 rounded-lg bg-{{ $tone }}-500/15 border border-{{ $tone }}-500/30 flex items-center justify-center">
+                @if($type === 'schreiben')
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-{{ $tone }}-300"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                @else
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-{{ $tone }}-300"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>
+                @endif
             </div>
             <div>
-                <div class="font-bold text-white text-sm">استيراد Schreiben</div>
-                <div class="text-xs text-slate-400 mt-1 leading-relaxed">ملف JSON واحد يحتوي على جميع المواضيع — لا يوجد Teil. كل entry فيه: <code class="text-emerald-300">title</code>, <code class="text-emerald-300">scenario</code>, <code class="text-emerald-300">level</code> (B1/B2), <code class="text-emerald-300">type</code>, <code class="text-emerald-300">points[]</code>, <code class="text-emerald-300">minutes</code>.</div>
+                <div class="font-bold text-white text-sm">{{ $title }}</div>
+                <div class="text-xs text-slate-400 mt-1 leading-relaxed">ملف JSON واحد يحتوي على جميع المواضيع — كل entry موضوع كامل. الحقول: {!! $shape !!}.</div>
+                @if($type === 'hoeren')
+                <div class="text-[11px] text-slate-500 mt-2 leading-relaxed">ملاحظة: <code class="text-orange-300/80">audio_url</code> خاصو يكون مسار نسبي للملف الصوتي (مثال: <code class="text-slate-400">/audio/teil1/restaurant.mp3</code>) — ارفع الملفات الصوتية فـ <code class="text-slate-400">public/audio/</code> منفصلة.</div>
+                @endif
             </div>
         </div>
     </div>

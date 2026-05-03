@@ -36,6 +36,67 @@
 /* dir="auto" is added per block by the renderer; this just aligns RTL text properly */
 .prose-feedback :is(p, li, td, blockquote, h1, h2, h3, h4)[dir="auto"] { unicode-bidi: plaintext; }
 .prose-feedback :is(p, li, h3, h4):dir(rtl) { text-align: right; }
+
+/* Mistake highlight — desktop: hover tooltip, mobile/touch: tap opens bottom sheet */
+.mistake-mark {
+    background: linear-gradient(180deg, transparent 50%, rgba(245, 158, 11, 0.40) 50%);
+    border-bottom: 2px dashed rgba(217, 119, 6, 0.7);
+    color: #fed7aa;
+    cursor: pointer;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-weight: 500;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+.mistake-mark:hover, .mistake-mark:focus, .mistake-mark.is-active {
+    background: linear-gradient(180deg, transparent 30%, rgba(245, 158, 11, 0.65) 30%);
+    outline: none;
+}
+
+/* Hover tooltip — only on devices with a real pointer (desktop / trackpad) */
+@media (hover: hover) and (pointer: fine) {
+    .mistake-mark::after {
+        content: '✓ ' attr(data-suggestion) ' — ' attr(data-reason);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #0d0e12;
+        color: #fff;
+        padding: 8px 12px;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.45;
+        white-space: normal;
+        width: max-content;
+        max-width: 320px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        z-index: 50;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+        direction: ltr;
+        text-align: left;
+    }
+    .mistake-mark::before {
+        content: '';
+        position: absolute;
+        bottom: calc(100% + 2px);
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: rgba(245, 158, 11, 0.4);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        z-index: 51;
+    }
+    .mistake-mark:hover::after,
+    .mistake-mark:hover::before { opacity: 1; }
+}
 </style>
 @endpush
 
@@ -81,10 +142,10 @@
         <div class="mb-4 p-4 rounded-xl flex items-center justify-between gap-4 bg-emerald-500/10 border border-emerald-500/20">
             <div dir="rtl">
                 <div class="font-bold text-white text-lg">تم تسجيل الإجابة</div>
-                <div class="text-sm text-slate-400 mt-0.5" x-text="wordCount + ' كلمة · ' + formatTime(elapsed) + ' مدة الكتابة'"></div>
+                <div class="text-sm text-slate-400 mt-0.5" x-text="wordCount + ' كلمة · ' + formatTime(elapsed) + ' · يمكنك التعديل و الإعادة'"></div>
             </div>
             <div class="flex items-center gap-2">
-                <button @click="reset()" class="px-4 py-2 rounded-xl border border-white/10 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-all" dir="rtl">إعادة المحاولة</button>
+                <button @click="confirmReset()" class="px-4 py-2 rounded-xl border border-red-500/20 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all" dir="rtl" title="مسح كلش وبدا من اللول">ابدا من جديد</button>
                 <a href="{{ route('schreiben.pdf', $topic->slug) }}" class="px-4 py-2 rounded-xl border border-white/10 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-all">PDF</a>
             </div>
         </div>
@@ -94,6 +155,71 @@
     <template x-if="aiError">
         <div class="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-200 text-sm" dir="rtl">
             <span x-text="aiError"></span>
+        </div>
+    </template>
+
+    {{-- Mistake bottom-sheet — opens when user taps a highlighted mistake --}}
+    <template x-if="mistakePopup">
+        <div class="fixed inset-0 z-[120] flex items-end justify-center"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             @keydown.escape.window="closeMistakePopup()">
+            {{-- Backdrop --}}
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeMistakePopup()"></div>
+
+            {{-- Sheet --}}
+            <div class="relative z-10 w-full md:max-w-md mb-0 md:mb-8 bg-[#0d0e12] border-t md:border md:rounded-2xl border-amber-500/30 shadow-2xl shadow-black/60 rounded-t-3xl overflow-hidden"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="translate-y-full"
+                 x-transition:enter-end="translate-y-0">
+
+                {{-- Handle (mobile affordance) --}}
+                <div class="md:hidden pt-2 pb-1 flex justify-center">
+                    <div class="w-12 h-1 rounded-full bg-white/15"></div>
+                </div>
+
+                {{-- Header --}}
+                <div class="px-5 py-3 flex items-center justify-between gap-3 border-b border-white/[0.05]">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="text-amber-300"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-[0.25em] text-amber-400" dir="rtl">تصحيح الخطأ</span>
+                    </div>
+                    <button @click="closeMistakePopup()" class="w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:text-white hover:bg-white/5 transition-all" title="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="px-5 py-4 space-y-3">
+                    {{-- Original (struck) --}}
+                    <div class="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-3 py-2.5" dir="ltr">
+                        <div class="text-[9px] font-bold uppercase tracking-wider text-red-400/80 mb-1">Original</div>
+                        <div class="text-base text-red-200 line-through font-serif" x-text="mistakePopup.original"></div>
+                    </div>
+
+                    {{-- Suggestion (correct) --}}
+                    <div class="rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2.5" dir="ltr">
+                        <div class="text-[9px] font-bold uppercase tracking-wider text-emerald-400/80 mb-1">✓ Correction</div>
+                        <div class="text-base text-emerald-200 font-bold font-serif" x-text="mistakePopup.suggestion"></div>
+                    </div>
+
+                    {{-- Reason --}}
+                    <template x-if="mistakePopup.reason">
+                        <div class="rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2.5">
+                            <div class="text-[9px] font-bold uppercase tracking-wider text-amber-400/80 mb-1" dir="rtl">السبب</div>
+                            <div class="text-sm text-slate-200 leading-relaxed" dir="auto" x-text="mistakePopup.reason"></div>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Footer hint --}}
+                <div class="px-5 py-2.5 border-t border-white/[0.05] bg-black/20 text-center text-[11px] text-slate-500" dir="rtl">
+                    اضغط فوق على أي خطأ مظلل للتعديل · ESC للإغلاق
+                </div>
+            </div>
         </div>
     </template>
 
@@ -366,6 +492,18 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                     <button x-show="verbesserteVersion"
+                            @click="copyVerbesserteVersion()"
+                            class="w-8 h-8 flex items-center justify-center rounded-full transition-all"
+                            :class="copiedVerbesserte ? 'text-emerald-300 bg-emerald-500/15' : 'text-slate-500 hover:text-emerald-300 hover:bg-emerald-500/10'"
+                            :title="copiedVerbesserte ? 'تم النسخ ✓' : 'نسخ Verbesserte Version'">
+                        <template x-if="!copiedVerbesserte">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        </template>
+                        <template x-if="copiedVerbesserte">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </template>
+                    </button>
+                    <button x-show="verbesserteVersion"
                             @click="printVerbesserteVersion()"
                             class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:text-orange-300 hover:bg-orange-500/10 transition-all"
                             title="طبع Verbesserte Version">
@@ -386,6 +524,23 @@
                     </button>
                 </div>
             </div>
+
+            {{-- Annotated submission — your text with mistakes highlighted --}}
+            <template x-if="!feedbackCompact && feedback.mistakes && feedback.mistakes.length">
+                <div class="px-5 py-4 border-t border-white/[0.05]" dir="rtl">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="text-amber-400"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                            <span class="text-[10px] font-black uppercase tracking-[0.25em] text-amber-400">النص ديالك · أخطاء ملونة</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500"><span class="font-bold text-amber-300" x-text="feedback.mistakes.length"></span> خطأ — مر بالماوس فوق الكلمة</span>
+                    </div>
+                    <div class="rounded-xl border border-amber-500/15 bg-amber-500/[0.03] p-4 text-[14.5px] leading-relaxed text-slate-200 whitespace-pre-wrap font-serif"
+                         dir="ltr"
+                         @click="handleMistakeClick($event)"
+                         x-html="annotatedText"></div>
+                </div>
+            </template>
 
             {{-- Markdown body (collapsible) --}}
             <div x-show="!feedbackCompact"
@@ -472,8 +627,7 @@
                 <template x-for="ch in germanChars" :key="ch">
                     <button type="button"
                             @click="insertChar(ch)"
-                            :disabled="submitted"
-                            class="min-w-[34px] h-8 px-2 rounded-md bg-[#111216] border border-white/[0.08] text-slate-200 text-sm font-semibold hover:bg-white/[0.04] hover:border-emerald-500/40 hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            class="min-w-[34px] h-8 px-2 rounded-md bg-[#111216] border border-white/[0.08] text-slate-200 text-sm font-semibold hover:bg-white/[0.04] hover:border-emerald-500/40 hover:text-white active:scale-95 transition-all"
                             x-text="ch"
                             :title="'إضافة ' + ch"></button>
                 </template>
@@ -483,8 +637,7 @@
             <textarea x-model="text"
                       x-ref="editor"
                       @input.debounce.500ms="persist()"
-                      :disabled="submitted"
-                      class="flex-1 min-h-[260px] lg:min-h-0 w-full bg-[#111216] border border-white/[0.08] rounded-2xl p-4 md:p-5 text-[15px] text-slate-100 leading-relaxed focus:outline-none focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 placeholder:text-slate-700 resize-none disabled:opacity-70"
+                      class="flex-1 min-h-[260px] lg:min-h-0 w-full bg-[#111216] border border-white/[0.08] rounded-2xl p-4 md:p-5 text-[15px] text-slate-100 leading-relaxed focus:outline-none focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 placeholder:text-slate-700 resize-none"
                       dir="ltr"
                       placeholder="Schreiben Sie hier Ihren {{ $topic->type ?? 'Brief' }}…
 Tipp: Beginnen Sie mit einer Anrede, beantworten Sie alle Punkte, schließen Sie mit einer Grußformel."></textarea>
@@ -498,20 +651,20 @@ Tipp: Beginnen Sie mit einer Anrede, beantworten Sie alle Punkte, schließen Sie
                         title="طبع النص ديالي">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
                 </button>
-                <button @click="reset()"
+                <button @click="confirmReset()"
                         :disabled="!text.length && !submitted"
                         class="px-4 h-9 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed" dir="rtl">
                     مسح
                 </button>
                 <button @click="submitText()"
-                        :disabled="grading || submitted || text.trim().length < 30"
+                        :disabled="grading || text.trim().length < 30"
                         class="btn-shine px-5 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-orange-600 text-white text-sm font-bold shadow-md shadow-emerald-500/30 hover:shadow-lg active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2">
                     <template x-if="grading">
                         <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
                     </template>
                     <span x-show="!submitted && !grading">تسليم وتصحيح</span>
                     <span x-show="grading">كيتصحح…</span>
-                    <span x-show="submitted && !grading">تم التسليم</span>
+                    <span x-show="submitted && !grading">صحح من جديد</span>
                 </button>
             </div>
         </div>
@@ -653,6 +806,30 @@ function schreibenTopic(parts, timerEnabled) {
             }
         },
 
+        // Confirm wipe — protects user from losing the Verbesserte Version + their text accidentally
+        confirmReset() {
+            const hasText     = this.text.trim().length > 0;
+            const hasFeedback = !!this.feedback;
+            if (hasText || hasFeedback) {
+                const msg = hasFeedback
+                    ? 'هذا غادي يمسح النص ديالك والتصحيح والـ Verbesserte Version. متأكد؟'
+                    : 'هذا غادي يمسح النص ديالك. متأكد؟';
+                if (!confirm(msg)) return;
+            }
+            this.reset();
+        },
+
+        copiedVerbesserte: false,
+        async copyVerbesserteVersion() {
+            const body = this.verbesserteVersion;
+            if (!body) return;
+            try {
+                await navigator.clipboard.writeText(body);
+                this.copiedVerbesserte = true;
+                setTimeout(() => { this.copiedVerbesserte = false; }, 1500);
+            } catch (e) {}
+        },
+
         get verbesserteVersion() {
             return this._extractMarkdownSection(this.feedback?.markdown, 2);
         },
@@ -757,8 +934,78 @@ function schreibenTopic(parts, timerEnabled) {
             return this._renderMarkdown(this.feedback?.markdown);
         },
 
+        // Bottom-sheet popup for tapped mistakes
+        mistakePopup: null,
+
+        handleMistakeClick(e) {
+            const mark = e.target.closest('.mistake-mark');
+            if (!mark) return;
+            // Visual feedback — briefly mark the active one
+            document.querySelectorAll('.mistake-mark.is-active').forEach(el => el.classList.remove('is-active'));
+            mark.classList.add('is-active');
+            this.mistakePopup = {
+                original:   mark.textContent,
+                suggestion: mark.dataset.suggestion || '',
+                reason:     mark.dataset.reason || '',
+            };
+        },
+
+        closeMistakePopup() {
+            this.mistakePopup = null;
+            document.querySelectorAll('.mistake-mark.is-active').forEach(el => el.classList.remove('is-active'));
+        },
+
+        get annotatedText() {
+            const src = (this.text || '').trim();
+            if (!src) return '';
+            const mistakes = Array.isArray(this.feedback?.mistakes) ? this.feedback.mistakes : [];
+            if (!mistakes.length) return this._escapeHtml(src);
+
+            // Sort longest-first so a short snippet doesn't pre-empt a longer one that contains it.
+            const ordered = [...mistakes]
+                .filter(m => m && typeof m.original === 'string' && m.original.length > 0)
+                .sort((a, b) => b.original.length - a.original.length);
+
+            // Walk the source text, find each mistake substring, and slice/wrap.
+            // We use a placeholder-token strategy to avoid re-wrapping already-wrapped spans.
+            const tokens = [];
+            let working = src;
+            let tokenId = 0;
+            for (const m of ordered) {
+                const idxStart = working.indexOf(m.original);
+                if (idxStart === -1) continue;
+                // Replace ALL non-overlapping occurrences with the same token (same tooltip)
+                while (true) {
+                    const i = working.indexOf(m.original);
+                    if (i === -1) break;
+                    const token = `MISTAKE${tokenId}`;
+                    working = working.slice(0, i) + token + working.slice(i + m.original.length);
+                }
+                tokens.push({
+                    id: tokenId,
+                    original: m.original,
+                    suggestion: m.suggestion || '',
+                    reason: m.reason || '',
+                });
+                tokenId++;
+            }
+
+            // Now escape the rest of the text, then replace tokens with the <mark> wrapper.
+            let html = this._escapeHtml(working);
+            for (const t of tokens) {
+                const wrapper = `<mark class="mistake-mark" tabindex="0" data-suggestion="${this._escapeHtml(t.suggestion)}" data-reason="${this._escapeHtml(t.reason)}">${this._escapeHtml(t.original)}</mark>`;
+                html = html.split(`MISTAKE${t.id}`).join(wrapper);
+            }
+            return html;
+        },
+
+        _escapeHtml(s) {
+            return String(s ?? '')
+                .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+        },
+
         insertChar(ch) {
-            if (this.submitted) return;
             const ta = this.$refs.editor;
             if (!ta) {
                 this.text += ch;

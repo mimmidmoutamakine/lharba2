@@ -107,6 +107,81 @@ class TopicImportService
      *
      * @return array{imported: int, skipped: int, errors: array}
      */
+    /**
+     * Import Hören topics from a JSON string.
+     * Each entry is ONE complete Hören topic (NOT a Teil-column update).
+     *
+     * Expected entry shape (any of these field names work — most are optional):
+     *   title              (required)
+     *   title_ar / arabic_title
+     *   level              ("B1" | "B2", default "B1")
+     *   teil               (1..4, default 1)
+     *   audio_url          (required for actual playback; can be filled later)
+     *   duration           (string, e.g. "2:30")
+     *   statements[]       (Teil 3 — array of {statement, answer})
+     *   correct_numbers[]  (Teil 1 — array of correct numbers)
+     *   flashcards[]       (vocab cards)
+     *
+     * Existing rows are matched by slug (or generated from title) and upserted.
+     *
+     * @return array{imported: int, skipped: int, errors: array}
+     */
+    public function importHoerenFromJson(string $json): array
+    {
+        $data = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['imported' => 0, 'skipped' => 0, 'errors' => ['Invalid JSON: ' . json_last_error_msg()]];
+        }
+
+        $entries  = $this->extractEntries($data);
+        $imported = 0;
+        $skipped  = 0;
+        $errors   = [];
+
+        foreach ($entries as $i => $entry) {
+            try {
+                $c     = is_array($entry['content'] ?? null) ? $entry['content'] : $entry;
+                $title = $entry['title'] ?? $c['title'] ?? null;
+                if (!$title) {
+                    throw new \RuntimeException('Missing title');
+                }
+
+                $slug = Str::slug($entry['slug'] ?? $c['slug'] ?? (($entry['id'] ?? $c['id'] ?? '') . '-' . $title));
+
+                $level = strtoupper($entry['level'] ?? $c['level'] ?? 'B1');
+                $level = in_array($level, ['B1', 'B2'], true) ? $level : 'B1';
+
+                $teil = (int) ($entry['teil'] ?? $c['teil'] ?? 1);
+                if ($teil < 1 || $teil > 4) $teil = 1;
+
+                $titleAr = $entry['title_ar'] ?? $entry['arabic_title'] ?? $c['title_ar'] ?? $c['arabic_title'] ?? null;
+                if ($titleAr === '') $titleAr = null;
+
+                $payload = [
+                    'title'           => $title,
+                    'title_ar'        => $titleAr,
+                    'slug'            => $slug,
+                    'level'           => $level,
+                    'teil'            => $teil,
+                    'audio_url'       => $entry['audio_url'] ?? $c['audio_url'] ?? null,
+                    'duration'        => $entry['duration'] ?? $c['duration'] ?? null,
+                    'correct_numbers' => $this->decodeIfString($entry['correct_numbers'] ?? $c['correct_numbers'] ?? null) ?? [],
+                    'flashcards'      => $this->decodeIfString($entry['flashcards']      ?? $c['flashcards']      ?? null) ?? [],
+                    'statements'      => $this->decodeIfString($entry['statements']      ?? $c['statements']      ?? null) ?? [],
+                    'is_published'    => ($entry['visibility'] ?? $c['visibility'] ?? 'public') === 'public',
+                ];
+
+                HoerenTopic::updateOrCreate(['slug' => $slug], $payload);
+                $imported++;
+            } catch (\Throwable $e) {
+                $skipped++;
+                $errors[] = "Entry $i: " . $e->getMessage();
+            }
+        }
+
+        return compact('imported', 'skipped', 'errors');
+    }
+
     public function importSchreibenFromJson(string $json): array
     {
         $data = json_decode($json, true);

@@ -51,7 +51,7 @@ The text MUST:
 - develop each selected point clearly with concrete realistic details
 - be connected to the task and advertisement (no generic phrases that fit any topic)
 - include Betreff, Anrede, Einleitung, logical paragraphs, useful connectors, Schluss, Grußformel
-- be 170–220 words
+- HARD WORD LIMIT: maximum 155 words for the email body (count Betreff + Anrede + paragraphs + Schluss + Grußformel + signature). Aim for 145–155 words. Tighten ruthlessly — drop filler clauses, combine sentences, prefer compact B2 phrasings. NEVER exceed 155 words.
 
 ==================================================
 TELC B2 CONTENT RULES

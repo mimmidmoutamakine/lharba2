@@ -196,8 +196,13 @@ class GeminiService
             $wortzahl = (int) $m[1];
         }
 
+        // Pull out the structured Mistakes JSON, then strip its section from the visible markdown
+        $mistakes = $this->extractMistakes($markdown);
+        $markdown = preg_replace('/\n##\s*4\.\s*Mistakes.*$/su', '', $markdown);
+
         return [
-            'markdown'            => $markdown,
+            'markdown'            => trim((string) $markdown),
+            'mistakes'            => $mistakes,
             'score'               => max(0, min($scoreMax, $score)),
             'score_max'           => $scoreMax,
             'raw_score'           => max(0, min($rawMax, $rawScore)),
@@ -207,6 +212,38 @@ class GeminiService
             'wortzahl'            => $wortzahl,
             'level_label'         => $this->levelLabel($score),
         ];
+    }
+
+    /**
+     * Pull the JSON mistakes block (section 4) out of the corrector's markdown.
+     *
+     * @return array<int, array{original:string, suggestion:string, reason:string}>
+     */
+    private function extractMistakes(string $markdown): array
+    {
+        // Find the json fenced code block under "## 4. Mistakes"
+        if (! preg_match('/##\s*4\.\s*Mistakes.*?```(?:json)?\s*(\[.*?\])\s*```/su', $markdown, $m)) {
+            return [];
+        }
+
+        $decoded = json_decode($m[1], true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($decoded as $item) {
+            if (! is_array($item)) continue;
+            $orig = trim((string) ($item['original'] ?? ''));
+            if ($orig === '') continue;
+            $out[] = [
+                'original'   => $orig,
+                'suggestion' => trim((string) ($item['suggestion'] ?? '')),
+                'reason'     => trim((string) ($item['reason'] ?? '')),
+            ];
+            if (count($out) >= 12) break; // hard safety cap
+        }
+        return $out;
     }
 
     private function humanizeError(int $status, ?array $body): string

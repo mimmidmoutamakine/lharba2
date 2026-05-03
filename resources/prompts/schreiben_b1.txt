@@ -65,7 +65,7 @@ Moroccan Darija in Arabic script for the Empfehlungen section.
 REQUIRED OUTPUT FORMAT
 ==================================================
 
-Output ONLY the three sections below. Do NOT include Kurzurteil, Leitpunkte-Analyse, Begründung, or a separate Fehler-Tabelle. Be concise and actionable.
+Output ONLY the FOUR sections below. Do NOT include Kurzurteil, Leitpunkte-Analyse, Begründung, or a separate Fehler-Tabelle. Be concise and actionable.
 
 Internally, you must still reason about all criteria and Leitpunkte before grading — but only show the user the three sections below.
 
@@ -103,6 +103,22 @@ Rewrite the student's text into a clean B1 version (140–180 Wörter), keeping 
 - Besser:
 - Warum:
 - Kurs zum Wiederholen:
+
+## 4. Mistakes (machine-readable)
+
+A JSON array of all important mistakes from the student's text, used by the app to highlight them inline. Maximum 8 most important. Use the EXACT original phrase as it appears in STUDENT_TEXT.
+
+```json
+[
+  { "original": "ich gehe in Schule", "suggestion": "ich gehe zur Schule", "reason": "Präposition zu + Dativ" }
+]
+```
+
+Rules:
+- "original" must be a verbatim substring of STUDENT_TEXT.
+- Keep "original" SHORT (2–6 words).
+- "reason" ≤ 10 words, in German or Darija.
+- If no significant mistakes, output `[]`.
 
 ==================================================
 TASK_TEXT

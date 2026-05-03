@@ -90,7 +90,7 @@
     <div class="text-center mb-12" dir="rtl">
         <div class="inline-flex items-center gap-2 mb-3 text-amber-400 font-bold">
             <svg width="16" height="16" viewBox="0 0 100 100" fill="currentColor"><path d="M50 4 L57 38 L93 32 L66 56 L96 78 L60 70 L50 96 L40 70 L4 78 L34 56 L7 32 L43 38 Z"/><circle cx="50" cy="56" r="6" fill="#08090C"/></svg>
-            <span class="text-xs uppercase tracking-[0.3em]">شنو كيميّز الهرب</span>
+            <span class="text-xs uppercase tracking-[0.3em]">مميزات الهربة</span>
         </div>
         <h2 class="text-3xl md:text-5xl font-bold mb-4 text-white">ما شي PDF · ما شي تكرار · ما شي ضياع وقت</h2>
         <p class="text-lg text-slate-400 max-w-2xl mx-auto">أدوات بنيناها بيد، باش تكون أسرع نينجا فالمتحان</p>

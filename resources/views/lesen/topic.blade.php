@@ -845,7 +845,9 @@
                                           : isAdPicked(ad.id) ? 'bg-amber-500/20 text-amber-300' : 'bg-white/5 text-amber-400'"
                                   x-text="ad.id"></span>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-white leading-snug" x-text="ad.title || 'Keine passende Anzeige'"></h3>
+                                <h3 class="font-bold text-white leading-snug"
+                                    x-show="ad.id === 'x' || ad.title"
+                                    x-text="ad.id === 'x' ? 'لا يوجد إعلان مناسب' : (ad.title || '')"></h3>
                                 <template x-if="adAssignedSituations(ad.id).length">
                                     <div class="mt-1.5 space-y-1">
                                         <template x-for="sn in adAssignedSituations(ad.id)" :key="sn">
@@ -1142,7 +1144,9 @@
                                               : 'bg-white/5 text-amber-400'"
                                       x-text="ad.id"></span>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-white leading-snug text-[15px]" x-text="ad.title || 'لا يوجد إعلان مناسب'"></h3>
+                                    <h3 class="font-bold text-white leading-snug text-[15px]"
+                                        x-show="ad.id === 'x' || ad.title"
+                                        x-text="ad.id === 'x' ? 'لا يوجد إعلان مناسب' : (ad.title || '')"></h3>
                                     {{-- 2-line preview when not expanded --}}
                                     <template x-if="t3ExpandedAd !== ad.id && ad.text">
                                         <p class="text-xs text-slate-400 mt-1 leading-relaxed"

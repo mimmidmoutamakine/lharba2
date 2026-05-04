@@ -393,8 +393,8 @@
                         <span class="text-sm font-bold text-white">
                             اختر عنواناً للنص <span class="text-amber-400" x-text="sheetTargetText"></span>
                         </span>
-                        <button @click="sheetOpen = false" class="text-slate-500 p-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        <button @click="sheetOpen = false" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white border border-white/15" aria-label="إغلاق">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                         </button>
                     </div>
                 </div>
@@ -685,7 +685,7 @@
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
              class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
-             style="height:88vh">
+             style="max-height:88vh; max-height:88dvh">
 
             {{-- Sticky header: handle + title + close + question chips --}}
             <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-3">
@@ -695,8 +695,8 @@
                         <div class="text-sm font-bold text-white">الأسئلة</div>
                         <div class="text-[10px] text-slate-500 mt-0.5" x-text="Object.keys(answers).length + '/' + (parts.teil2.questions?.length ?? 0) + ' تم الإجابة'"></div>
                     </div>
-                    <button @click="qSheetOpen = false" class="text-slate-500 active:text-white p-1.5 -m-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    <button @click="qSheetOpen = false" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white border border-white/15" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                     </button>
                 </div>
                 {{-- Question chips for in-sheet navigation --}}
@@ -1103,7 +1103,7 @@
              x-transition:leave-start="translate-y-0"
              x-transition:leave-end="translate-y-full"
              class="fixed bottom-0 left-0 right-0 z-[80] lg:hidden bg-[#0B0C10] rounded-t-2xl border-t border-white/10 flex flex-col touch-pan-y"
-             style="height:88vh">
+             style="max-height:88vh; max-height:88dvh">
 
             {{-- Sticky header: handle + active situation summary + close --}}
             <div class="shrink-0 bg-[#0B0C10] border-b border-white/[0.06] pt-3 px-4 pb-3">
@@ -1117,8 +1117,8 @@
                         <p class="text-sm text-white leading-snug" dir="ltr"
                            x-text="t3SheetSituation !== null ? (parts.teil3.situations.find(s => s.id === t3SheetSituation)?.text ?? '') : ''"></p>
                     </div>
-                    <button @click="t3SheetOpen = false" class="text-slate-500 active:text-white p-1.5 -m-1.5 shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    <button @click="t3SheetOpen = false" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white border border-white/15" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
@@ -1415,8 +1415,8 @@
                             <div class="text-[10px] font-black uppercase tracking-widest text-amber-400">الفراغ <span x-text="activeBlank ?? ''"></span></div>
                             <div class="text-sm font-bold text-white mt-0.5" x-text="submitted ? 'مراجعة الإجابة' : 'اختر الإجابة الصحيحة'"></div>
                         </div>
-                        <button @click="sb1SheetOpen = false; activeBlank = null" class="text-slate-500 active:text-white p-1.5 -m-1.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        <button @click="sb1SheetOpen = false; activeBlank = null" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white border border-white/15" aria-label="إغلاق">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                         </button>
                     </div>
                 </div>
@@ -1740,8 +1740,8 @@
                             <div class="text-[10px] font-black uppercase tracking-widest text-amber-400">الفراغ <span x-text="activeBlank ?? ''"></span></div>
                             <div class="text-sm font-bold text-white mt-0.5" x-text="submitted ? 'مراجعة الإجابة' : 'اختر كلمة من القاموس'"></div>
                         </div>
-                        <button @click="sb2SheetOpen = false; activeBlank = null" class="text-slate-500 active:text-white p-1.5 -m-1.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        <button @click="sb2SheetOpen = false; activeBlank = null" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white border border-white/15" aria-label="إغلاق">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                         </button>
                     </div>
                 </div>

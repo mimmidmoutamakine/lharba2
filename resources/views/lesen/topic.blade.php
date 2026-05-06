@@ -2249,16 +2249,13 @@ function lesenTopic(parts, initialPart, timerEnabled) {
             this.t3SheetSituation = situationId;
             this.t3ExpandedAd     = null;
             this.t3SheetOpen      = true;
-            this._lockBodyScroll(true);
         },
 
         pickAdForSheetSituation(adId) {
             if (this.t3SheetSituation === null) return;
             this.answers[this.t3SheetSituation] = adId;
-            this.answers     = { ...this.answers };
-            this.t3SheetOpen  = false;
             this.t3ExpandedAd = null;
-            this._lockBodyScroll(false);
+            this.$nextTick(() => { this.t3SheetOpen = false; });
         },
 
         _lockBodyScroll(locked) {

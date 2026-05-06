@@ -1147,6 +1147,13 @@
                                     <h3 class="font-bold text-white leading-snug text-[15px]"
                                         x-show="ad.id === 'x' || ad.title"
                                         x-text="ad.id === 'x' ? 'لا يوجد إعلان مناسب' : (ad.title || '')"></h3>
+                                    {{-- "Already used by Situation X" badge --}}
+                                    <template x-if="adAssignedTo(ad.id) !== null && adAssignedTo(ad.id) !== t3SheetSituation">
+                                        <div class="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-500/15 text-slate-400" dir="rtl">
+                                            <span>مرتبط بالموقف</span>
+                                            <span x-text="adAssignedTo(ad.id)"></span>
+                                        </div>
+                                    </template>
                                     {{-- 2-line preview when not expanded --}}
                                     <template x-if="t3ExpandedAd !== ad.id && ad.text">
                                         <p class="text-xs text-slate-400 mt-1 leading-relaxed"
@@ -2015,22 +2022,41 @@ function lesenTopic(parts, initialPart, timerEnabled) {
         },
 
         // ── Teil 3: ad ↔ situation matching ─────────────────────────
+        // Each ad maps to at most ONE situation (except 'x' = no-match, which is reusable).
+        // Picking an already-used ad auto-swaps: it leaves the previous situation unanswered.
+        adAssignedTo(adId) {
+            if (adId === 'x') return null;
+            const sid = Object.keys(this.answers).find(s => this.answers[s] === adId);
+            return sid !== undefined ? (isNaN(Number(sid)) ? sid : Number(sid)) : null;
+        },
+
+        _assignAd(situationId, adId) {
+            if (adId !== 'x') {
+                for (const sid of Object.keys(this.answers)) {
+                    if (this.answers[sid] === adId && String(sid) !== String(situationId)) {
+                        delete this.answers[sid];
+                    }
+                }
+            }
+            this.answers[situationId] = adId;
+            this.answers = { ...this.answers };
+        },
+
         toggleAdAssignment(situationId, adId) {
             if (this.submitted) return;
             if (this.answers[situationId] === adId) {
                 delete this.answers[situationId];
+                this.answers = { ...this.answers };
             } else {
-                this.answers[situationId] = adId;
+                this._assignAd(situationId, adId);
             }
-            this.answers = { ...this.answers };
         },
 
         selectSituation(situationId) {
             if (this.submitted) return;
             // If an ad is already armed, assign it on click
             if (this.selectedAd) {
-                this.answers[situationId] = this.selectedAd;
-                this.answers = { ...this.answers };
+                this._assignAd(situationId, this.selectedAd);
                 this.selectedAd = null;
                 return;
             }
@@ -2040,8 +2066,7 @@ function lesenTopic(parts, initialPart, timerEnabled) {
         selectAd(adId) {
             if (this.submitted) return;
             if (this.selectedSituation !== null) {
-                this.answers[this.selectedSituation] = adId;
-                this.answers = { ...this.answers };
+                this._assignAd(this.selectedSituation, adId);
                 this.selectedSituation = null;
                 return;
             }
@@ -2057,8 +2082,7 @@ function lesenTopic(parts, initialPart, timerEnabled) {
         dropOnSituation(event, situationId) {
             const adId = event.dataTransfer.getData('adId') || this.dragging;
             if (!adId || this.submitted) return;
-            this.answers[situationId] = adId;
-            this.answers = { ...this.answers };
+            this._assignAd(situationId, adId);
             this.dragging = null;
             this.selectedSituation = null;
             this.selectedAd = null;
@@ -2253,7 +2277,7 @@ function lesenTopic(parts, initialPart, timerEnabled) {
 
         pickAdForSheetSituation(adId) {
             if (this.t3SheetSituation === null) return;
-            this.answers[this.t3SheetSituation] = adId;
+            this._assignAd(this.t3SheetSituation, adId);
             this.t3ExpandedAd = null;
             this.$nextTick(() => { this.t3SheetOpen = false; });
         },

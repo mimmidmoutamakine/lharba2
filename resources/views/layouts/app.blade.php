@@ -122,6 +122,11 @@
                    class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap {{ request()->routeIs('schreiben*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
                     Schreiben
                 </a>
+                <a href="{{ route('mundlich.b2-planning.index') }}"
+                   class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap inline-flex items-center gap-1.5 {{ request()->routeIs('mundlich*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
+                    Mündlich
+                    <span class="text-[9px] font-bold uppercase tracking-wider px-1 rounded bg-amber-500/20 text-amber-300">جديد</span>
+                </a>
                 <a href="{{ route('simulation.index') }}"
                    class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap {{ request()->routeIs('simulation*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
                     اختبر نفسك
@@ -207,6 +212,10 @@
             <a href="{{ route('lesen.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Lesen</a>
             <a href="{{ route('hoeren.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Hören</a>
             <a href="{{ route('schreiben.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Schreiben</a>
+            <a href="{{ route('mundlich.b2-planning.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between">
+                <span>Mündlich</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">جديد</span>
+            </a>
             <a href="{{ route('simulation.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">اختبر نفسك</a>
             <a href="{{ route('plan') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">خطتي</a>
             <div class="border-t border-white/[0.08] mt-2 pt-3 flex gap-3">
@@ -277,7 +286,7 @@
 // Stored in localStorage under 'topic-status' = { lesen:{id:'mastered'|'revise'}, hoeren:{}, schreiben:{} }
 window.TopicStatus = (function () {
     const KEY     = 'topic-status';
-    const SKILLS  = ['lesen', 'hoeren', 'schreiben'];
+    const SKILLS  = ['lesen', 'hoeren', 'schreiben', 'goethe-b1-lesen'];
     const MIG_KEY = 'topic-status-migrated-v1';
 
     function load() {
@@ -336,7 +345,24 @@ window.TopicStatus = (function () {
 
 @auth
 {{-- ── Auto welcome overlay — pops up the moment admin approves the user's access request ── --}}
-<div id="welcome-overlay-root" x-data="welcomeWatcher()" x-init="start()" x-cloak>
+@php
+    $welcomeUser    = auth()->user();
+    $welcomePending = $welcomeUser->pendingAccess();        // request awaiting admin decision
+    $welcomeReady   = $welcomeUser->pendingWelcomeRequest(); // approved but not yet welcomed
+    $welcomeShouldRender = $welcomePending !== null || $welcomeReady !== null;
+    $welcomeInitial = $welcomeReady ? [
+        'id'             => $welcomeReady->id,
+        'language'       => $welcomeReady->language,
+        'language_label' => $welcomeReady->languageLabel(),
+        'exam'           => $welcomeReady->exam,
+        'level'          => $welcomeReady->level,
+        'decided_at'     => $welcomeReady->decided_at?->toIso8601String(),
+    ] : null;
+@endphp
+@if($welcomeShouldRender)
+<div id="welcome-overlay-root"
+     x-data="welcomeWatcher({{ json_encode(['shouldPoll' => $welcomePending !== null, 'initial' => $welcomeInitial]) }})"
+     x-init="start()" x-cloak>
     <template x-if="data">
         <div class="fixed inset-0 z-[200] flex items-center justify-center p-4"
              x-transition:enter="transition ease-out duration-300"
@@ -410,11 +436,13 @@ window.TopicStatus = (function () {
         </div>
     </template>
 </div>
+@endif
 
 <script>
-function welcomeWatcher() {
+function welcomeWatcher(config) {
     return {
-        data: null,
+        data: (config && config.initial) || null,
+        _shouldPoll: !!(config && config.shouldPoll),
         _interval: null,
         _lastPollAt: 0,
         _stopped: false,
@@ -424,6 +452,12 @@ function welcomeWatcher() {
         _minGapMs:    8000,   // hard floor — never re-poll faster than this
 
         start() {
+            // Server already armed the overlay — show it immediately, no polling needed.
+            if (this.data) return;
+
+            // No pending request to wait for — don't poll at all.
+            if (!this._shouldPoll) return;
+
             // First poll, slight delay so we don't compete with the page's other on-load fetches.
             setTimeout(() => this._poll(), 1500);
 

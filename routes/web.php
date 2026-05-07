@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\TopicImportController;
 use App\Http\Controllers\Admin\AccessRequestController as AdminAccessRequestController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GoetheB1\LesenController as GoetheB1LesenController;
+use App\Http\Controllers\Mundlich\B2PlanningController as MundlichB2PlanningController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -46,6 +48,26 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::prefix('hoeren')->name('hoeren.')->group(function () {
         Route::get('/', [AdminController::class, 'hoerenIndex'])->name('index');
         Route::delete('/{topic}', [AdminController::class, 'hoerenDestroy'])->name('destroy');
+    });
+
+    // Goethe B1 Lesen management
+    Route::prefix('goethe-b1/lesen')->name('goethe-b1.lesen.')->group(function () {
+        Route::get('/', [AdminController::class, 'goetheB1LesenIndex'])->name('index');
+        Route::get('/import', [AdminController::class, 'goetheB1LesenImportShow'])->name('import.show');
+        Route::post('/import', [AdminController::class, 'goetheB1LesenImportHandle'])->name('import.handle');
+        Route::post('/import/preview', [AdminController::class, 'goetheB1LesenImportPreview'])->name('import.preview');
+        Route::delete('/{topic}', [AdminController::class, 'goetheB1LesenDestroy'])->name('destroy');
+        Route::patch('/{topic}/toggle', [AdminController::class, 'goetheB1LesenToggle'])->name('toggle');
+    });
+
+    // Telc B2 Mündlich Teil 3 — Gemeinsam etwas planen
+    Route::prefix('mundlich/b2-planning')->name('mundlich.b2-planning.')->group(function () {
+        Route::get('/', [AdminController::class, 'mundlichB2PlanningIndex'])->name('index');
+        Route::get('/import', [AdminController::class, 'mundlichB2PlanningImportShow'])->name('import.show');
+        Route::post('/import', [AdminController::class, 'mundlichB2PlanningImportHandle'])->name('import.handle');
+        Route::post('/import/preview', [AdminController::class, 'mundlichB2PlanningImportPreview'])->name('import.preview');
+        Route::delete('/{topic}', [AdminController::class, 'mundlichB2PlanningDestroy'])->name('destroy');
+        Route::patch('/{topic}/toggle', [AdminController::class, 'mundlichB2PlanningToggle'])->name('toggle');
     });
 
     // Import (lesen or hoeren)
@@ -102,6 +124,21 @@ Route::middleware(['auth', 'has.access'])->group(function () {
         Route::post('/generate', [SchreibenController::class, 'generate'])
             ->middleware('throttle:8,1')
             ->name('generate');
+    });
+
+    Route::prefix('goethe-b1/lesen')->name('goethe-b1.lesen.')->group(function () {
+        Route::get('/', [GoetheB1LesenController::class, 'index'])->name('index');
+        Route::get('/{slug}', [GoetheB1LesenController::class, 'topic'])->name('topic');
+        Route::post('/{slug}/submit', [GoetheB1LesenController::class, 'submit'])
+            ->middleware('throttle:30,1')
+            ->name('submit');
+    });
+
+    // Telc B2 Mündlich Teil 3 — Gemeinsam etwas planen
+    Route::prefix('mundlich/b2-planning')->name('mundlich.b2-planning.')->group(function () {
+        Route::get('/',            [MundlichB2PlanningController::class, 'index'])->name('index');
+        Route::get('/strukturen',  [MundlichB2PlanningController::class, 'structures'])->name('structures');
+        Route::get('/{slug}',      [MundlichB2PlanningController::class, 'topic'])->name('topic');
     });
 
     Route::get('/plan', [PlanController::class, 'index'])->name('plan');

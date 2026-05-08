@@ -7,12 +7,43 @@
 <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+    /* Sliding teil-filter indicator. Transition class only added after first paint
+       so the initial position snap is instant, not animated from origin. */
+    .lharba-teil-indicator--animate {
+        transition: transform 400ms cubic-bezier(0.85, 0, 0.15, 1),
+                    width     400ms cubic-bezier(0.85, 0, 0.15, 1),
+                    height    400ms cubic-bezier(0.85, 0, 0.15, 1),
+                    opacity   200ms ease;
+    }
+
+    /* Ninja-flavored card entry: emerge from shadow, settle into place. */
+    @media (prefers-reduced-motion: no-preference) {
+        @keyframes lharba-card-in {
+            0%   { opacity: 0; transform: translateY(6px) scale(0.985); filter: blur(2px); }
+            60%  { opacity: 1; filter: blur(0); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        .card-stagger {
+            animation: lharba-card-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1)
+                       calc(var(--card-i, 0) * 26ms) backwards;
+        }
+        @keyframes lharba-card-fade {
+            from { opacity: 0; transform: scale(0.97); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .card-refilter {
+            animation: lharba-card-fade 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+    }
 </style>
 @endpush
 
 @section('content')
 
-<div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 pb-16">
+<div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 pb-16"
+     x-data="lesenIndex({{ json_encode($teil ?? '') }})"
+     x-init="init()">
 
     {{-- Page Header --}}
     <div class="mb-10" dir="rtl">
@@ -48,20 +79,28 @@
     <div class="mb-6 p-3 md:p-5 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent backdrop-blur-sm shadow-lg shadow-black/20">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
 
-            {{-- Teil segmented control --}}
+            {{-- Teil segmented control (client-side filter, sliding indicator) --}}
             <div class="min-w-0">
                 <div class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 mb-2" dir="rtl">الجزء (Teil)</div>
-                <div class="grid grid-cols-6 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
+                <div x-ref="teilBar"
+                     class="relative grid grid-cols-6 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
+
+                    {{-- Sliding indicator (the highlight that slides between pills) --}}
+                    <span class="lharba-teil-indicator pointer-events-none absolute top-0 left-0 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30"
+                          :class="transitionsOn ? 'lharba-teil-indicator--animate' : ''"
+                          :style="indicatorReady
+                                    ? { transform: `translate(${indicator.x}px, ${indicator.y}px)`, width: indicator.w + 'px', height: indicator.h + 'px', opacity: 1 }
+                                    : { opacity: 0 }"></span>
+
                     @foreach($teilOptions as $val => [$short, $full])
-                    @php $isActive = ($teil ?? null) === $val; @endphp
-                    <a href="{{ route('lesen.index', $val ? ['teil' => $val] + request()->only('level') : request()->only('level')) }}"
-                       class="relative px-2 md:px-4 py-1.5 md:py-2 rounded-xl text-[12px] md:text-sm font-semibold whitespace-nowrap transition-all duration-300 ease-out text-center
-                              {{ $isActive
-                                  ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30 scale-[1.02]'
-                                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06] hover:scale-[1.02] active:scale-[0.98]' }}">
+                    <button type="button"
+                            data-teil-pill="{{ $val ?? '' }}"
+                            @click="setTeil('{{ $val ?? '' }}')"
+                            class="relative z-10 px-2 md:px-4 py-1.5 md:py-2 rounded-xl text-[12px] md:text-sm font-semibold whitespace-nowrap transition-colors duration-200 text-center"
+                            :class="currentTeil === '{{ $val ?? '' }}' ? 'text-white' : 'text-slate-400 hover:text-white'">
                         <span class="md:hidden">{{ $short }}</span>
                         <span class="hidden md:inline">{{ $full }}</span>
-                    </a>
+                    </button>
                     @endforeach
                 </div>
             </div>
@@ -99,24 +138,23 @@
         </div>
     </div>
 
-    {{-- Topics count --}}
+    {{-- Topics count (reactive) --}}
     <div class="flex items-center justify-between mb-4 text-xs text-slate-500" dir="rtl">
         <div class="flex items-center gap-2">
-            <span class="font-bold text-white text-base">{{ count($topics ?? []) }}</span>
-            <span>موضوع</span>
-            @if($teil)
-            <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">{{ $teilOptions[$teil][1] }}</span>
-            @endif
+            <span class="font-bold text-white text-base tabular-nums" x-text="visibleCount"></span>
+            <span x-text="currentTeil ? 'تمرين' : 'موضوع'"></span>
+            <template x-if="currentTeil">
+                <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold" x-text="teilFullLabel"></span>
+            </template>
             @if(request('level'))
             <span class="px-2 py-0.5 rounded-md font-bold {{ request('level') === 'B2' ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300' : 'bg-amber-500/15 border border-amber-500/30 text-amber-300' }}">{{ request('level') }}</span>
             @endif
         </div>
-        @if($teil || request('level'))
-        <a href="{{ route('lesen.index') }}" class="text-[11px] text-slate-500 hover:text-white transition-colors flex items-center gap-1">
+        <button type="button" @click="setTeil('')" x-show="currentTeil"
+                class="text-[11px] text-slate-500 hover:text-white transition-colors flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             مسح الفلاتر
-        </a>
-        @endif
+        </button>
     </div>
 
     @php
@@ -134,24 +172,30 @@
             'sprachbausteine1' => 'Sprachbausteine 1',
             'sprachbausteine2' => 'Sprachbausteine 2',
         ];
+        // Render every (topic, teil) tuple — filter happens client-side via Alpine.
         $cardItems = [];
         foreach ($topics ?? [] as $t) {
             foreach (array_keys($teilFullNames) as $tk) {
                 if (empty($t->$tk)) continue;
-                if ($teil && $teil !== $tk) continue;
                 $cardItems[] = [$t, $tk];
             }
         }
     @endphp
 
     {{-- Topics Grid --}}
-    <div x-data="lesenIndex()" x-init="hydrate()" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-        @forelse($cardItems as [$topic, $teilKey])
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        @forelse($cardItems as $idx => [$topic, $teilKey])
         @php
             $cardKey  = $topic->id . '-' . $teilKey;
             $href     = route('lesen.topic', ['slug' => $topic->slug, 'teil' => $teilKey]);
         @endphp
-        <div class="group relative p-3.5 rounded-2xl border bg-[#111216] flex flex-col gap-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:bg-[#13141A]"
+        <div data-card-teil="{{ $teilKey }}"
+             style="--card-i: {{ min($idx, 24) }};"
+             x-show="cardVisible('{{ $teilKey }}')"
+             x-transition:enter="transition-opacity duration-200 ease-out"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             class="card-stagger group relative p-3.5 rounded-2xl border bg-[#111216] flex flex-col gap-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:bg-[#13141A]"
              :class="statusBorder('{{ $cardKey }}')"
              dir="ltr">
             {{-- Hover sheen --}}
@@ -233,20 +277,49 @@
             </div>
         </div>
         @empty
-        <div class="sm:col-span-2 lg:col-span-3 text-center py-12 text-slate-500 text-sm" dir="rtl">
-            <p>لا توجد مواضيع تطابق الفلاتر المختارة.</p>
-            <p class="text-xs mt-1 text-slate-600">جرّب تغيير الفلاتر أو امسحها.</p>
-        </div>
         @endforelse
+
+        {{-- Empty state — fires when initial DB has no topics OR client-side filter hides everything --}}
+        <div x-show="visibleCount === 0" x-cloak
+             class="sm:col-span-2 lg:col-span-3 text-center py-12 text-slate-500 text-sm" dir="rtl">
+            <p>لا توجد مواضيع تطابق الفلاتر المختارة.</p>
+            <button type="button" @click="setTeil('')"
+                    class="text-xs mt-2 text-amber-400 hover:text-amber-300 transition-colors">
+                مسح الفلاتر
+            </button>
+        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-function lesenIndex() {
+function lesenIndex(initialTeil) {
     return {
         statuses: {},
         timer: {},
+
+        // ── Filter state ────────────────────────────────────────────
+        currentTeil: initialTeil || '',
+        indicator: { x: 0, y: 0, w: 0, h: 0 },
+        indicatorReady: false,
+        transitionsOn: false,
+        teilLabels: @json(collect($teilOptions)->map(fn ($v) => $v[1])->all()),
+
+        init() {
+            this.hydrate();
+            // First paint: snap indicator to position WITHOUT animation, then enable
+            // transitions so subsequent setTeil calls animate.
+            this.$nextTick(() => requestAnimationFrame(() => {
+                this.measureIndicator();
+                this.indicatorReady = true;
+                requestAnimationFrame(() => { this.transitionsOn = true; });
+            }));
+            window.addEventListener('resize', () => this.measureIndicator());
+            // Re-measure when fonts / async content shift things.
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => this.measureIndicator());
+            }
+        },
 
         hydrate() {
             this.statuses = (window.TopicStatus?.all().lesen) || {};
@@ -261,6 +334,47 @@ function lesenIndex() {
                     this.statuses = window.TopicStatus.all().lesen || {};
                 }
             });
+        },
+
+        // ── Filter / indicator ─────────────────────────────────────
+        setTeil(val) {
+            this.currentTeil = val || '';
+            this.$nextTick(() => requestAnimationFrame(() => this.measureIndicator()));
+            // Update URL silently — back button reflects state, no reload.
+            const url = new URL(location.href);
+            if (this.currentTeil) url.searchParams.set('teil', this.currentTeil);
+            else                  url.searchParams.delete('teil');
+            history.replaceState(null, '', url.toString());
+        },
+
+        measureIndicator() {
+            const bar = this.$refs.teilBar;
+            if (!bar) return;
+            const active = bar.querySelector(`[data-teil-pill="${this.currentTeil}"]`);
+            if (!active) return;
+            const barRect = bar.getBoundingClientRect();
+            const rect    = active.getBoundingClientRect();
+            this.indicator = {
+                x: rect.left - barRect.left,
+                y: rect.top  - barRect.top,
+                w: rect.width,
+                h: rect.height,
+            };
+        },
+
+        cardVisible(teilKey) {
+            return !this.currentTeil || this.currentTeil === teilKey;
+        },
+
+        get visibleCount() {
+            // Count DOM cards matching current filter — works regardless of total card pool.
+            return Array.from(document.querySelectorAll('[data-card-teil]'))
+                .filter(el => !this.currentTeil || el.getAttribute('data-card-teil') === this.currentTeil)
+                .length;
+        },
+
+        get teilFullLabel() {
+            return this.teilLabels[this.currentTeil] || '';
         },
 
         toggleStatus(key, value) {

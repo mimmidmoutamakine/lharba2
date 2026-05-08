@@ -56,6 +56,7 @@
 </head>
 
 <body class="bg-[#08090C] text-slate-900 font-cairo antialiased overflow-x-hidden selection:bg-amber-500/40 selection:text-white">
+@include('partials.perceived-perf')
 
 <div class="bg-[#08090C] min-h-screen font-cairo antialiased overflow-x-hidden relative transition-colors duration-500 text-slate-300 selection:bg-amber-500/30 selection:text-white">
 

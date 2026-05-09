@@ -438,7 +438,7 @@
     <div class="relative w-full" dir="ltr">
         <div class="absolute left-0 top-0 h-full w-24 md:w-48 bg-gradient-to-r pointer-events-none z-10 from-[#08090C] to-transparent"></div>
         <div class="absolute right-0 top-0 h-full w-24 md:w-48 bg-gradient-to-l pointer-events-none z-10 from-[#08090C] to-transparent"></div>
-        <div class="animate-marquee">
+        <div class="animate-marquee" id="lharba-testimonials-marquee">
             @foreach([1, 2] as $_)
             <div class="flex gap-5 px-3 shrink-0">
                 @foreach($testimonials as $t)
@@ -509,5 +509,32 @@
         </div>
     </div>
 </section>
+
+@push('scripts')
+<script>
+    // Pause the testimonials marquee when it's offscreen — saves continuous CPU/GPU
+    // on a heavy homepage. Also pause when the tab is hidden.
+    (function () {
+        const el = document.getElementById('lharba-testimonials-marquee');
+        if (!el) return;
+        const setPaused = (paused) => { el.style.animationPlayState = paused ? 'paused' : 'running'; };
+
+        if ('IntersectionObserver' in window) {
+            const io = new IntersectionObserver(
+                (entries) => entries.forEach(e => setPaused(!e.isIntersecting)),
+                { rootMargin: '100px' }
+            );
+            io.observe(el);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) setPaused(true);
+            // Resume only if the marquee is also onscreen — IO will fix it on next event.
+            else if (el.getBoundingClientRect().bottom > 0 && el.getBoundingClientRect().top < window.innerHeight) {
+                setPaused(false);
+            }
+        });
+    })();
+</script>
+@endpush
 
 @endsection

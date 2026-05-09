@@ -88,32 +88,74 @@ class GoetheB1LesenImportService
         // Prefer explicit paragraph segmentation if the source provides it —
         // OCR can't reliably reconstruct paragraph breaks where the last line
         // of a paragraph is column-full, so let the source override the heuristic.
+        $paragraphs = null;
         if (!empty($exam['passage_paragraphs']) && is_array($exam['passage_paragraphs'])) {
-            $passage  = implode("\n\n", array_map(fn ($p) => $this->mechanicalPassageCleanup(trim((string) $p)), $exam['passage_paragraphs']));
+            $paragraphs = array_values(array_map(
+                fn ($p) => $this->mechanicalPassageCleanup(trim((string) $p)),
+                $exam['passage_paragraphs']
+            ));
+            $passage  = implode("\n\n", $paragraphs);
             $blogName = $exam['blog_name'] ?? null;
         } else {
             [$passage, $blogName] = $this->cleanTeil1Passage($exam['passage_text'] ?? '');
+            // Reconstruct paragraphs from the cleaned passage so the view always has the array form.
+            $paragraphs = preg_split('/\n{2,}/', $passage) ?: [$passage];
+        }
+
+        $paragraphsAr = [];
+        if (!empty($exam['passage_translation_paragraphs']) && is_array($exam['passage_translation_paragraphs'])) {
+            $paragraphsAr = array_values(array_map(
+                fn ($p) => trim((string) $p),
+                $exam['passage_translation_paragraphs']
+            ));
         }
 
         $beispiel = null;
         if (isset($exam['beispiel']) && is_array($exam['beispiel'])) {
-            $beispiel = [
-                'id'     => $exam['beispiel']['number'] ?? 0,
-                'prompt' => trim($exam['beispiel']['prompt'] ?? ''),
-                'answer' => $exam['beispiel']['answer'] ?? null,
-            ];
+            $beispiel = $this->normalizeTeil1Question($exam['beispiel'], 0);
         }
 
         return [
-            'instructions' => $exam['instructions'] ?? '',
-            'blog_name'    => $blogName,
-            'passage'      => $passage,
-            'beispiel'     => $beispiel,
-            'questions'    => array_map(fn ($q) => [
-                'id'     => $q['number'] ?? null,
-                'prompt' => trim($q['prompt'] ?? ''),
-                'answer' => $q['answer'] ?? null,
-            ], $exam['questions'] ?? []),
+            'instructions'           => $exam['instructions'] ?? '',
+            'topic_title'            => $exam['topic_title'] ?? null,
+            'topic_title_ar'         => $exam['topic_title_ar'] ?? null,
+            'blog_name'              => $blogName,
+            'blog_url'               => $exam['blog_url'] ?? null,
+            'passage'                => $passage,
+            'passage_paragraphs'     => $paragraphs,
+            'passage_paragraphs_ar'  => $paragraphsAr,
+            'beispiel'               => $beispiel,
+            'questions'              => array_map(
+                fn ($q, $i) => $this->normalizeTeil1Question($q, $i + 1),
+                $exam['questions'] ?? [],
+                array_keys($exam['questions'] ?? [])
+            ),
+        ];
+    }
+
+    /**
+     * Normalize a single Teil 1 question (or the Beispiel) — passes through the
+     * rich fields needed for evidence highlighting + Darija explanations + AR translation.
+     */
+    private function normalizeTeil1Question(array $q, int $defaultId): array
+    {
+        $evidence = $q['evidence'] ?? [];
+        if (is_string($evidence)) $evidence = [$evidence];
+        if (!is_array($evidence)) $evidence = [];
+        $evidence = array_values(array_filter(array_map(
+            fn ($s) => trim((string) $s),
+            $evidence
+        ), fn ($s) => $s !== ''));
+
+        return [
+            'id'                       => $q['number'] ?? $defaultId,
+            'prompt'                   => trim($q['prompt'] ?? ''),
+            'prompt_ar'                => isset($q['prompt_ar']) ? trim((string) $q['prompt_ar']) : null,
+            'answer'                   => $q['answer'] ?? null,
+            'evidence'                 => $evidence,
+            'evidence_paragraph_index' => isset($q['evidence_paragraph_index']) ? (int) $q['evidence_paragraph_index'] : null,
+            'explanation'              => isset($q['explanation'])    ? trim((string) $q['explanation'])    : null,
+            'explanation_de'           => isset($q['explanation_de']) ? trim((string) $q['explanation_de']) : null,
         ];
     }
 

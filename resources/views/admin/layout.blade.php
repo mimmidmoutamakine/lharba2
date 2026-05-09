@@ -19,7 +19,7 @@
         {{-- Logo --}}
         <div class="px-6 py-5 border-b border-white/[0.08]">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5">
-                <img src="{{ asset('images/lharba-logo.svg') }}" alt="الهربة" class="h-7 w-auto shrink-0">
+                <img src="{{ asset('images/lharba-logo.svg') }}" alt="الهربة" class="h-7 w-auto shrink-0" loading="lazy" decoding="async">
                 <div class="border-r border-white/10 pr-2.5">
                     <div class="text-sm font-bold text-white leading-none">{{ config('app.name', 'الهربة') }}</div>
                     <div class="text-[10px] text-slate-500 mt-0.5 font-medium uppercase tracking-widest">Admin Panel</div>

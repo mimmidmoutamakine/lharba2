@@ -45,10 +45,9 @@
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Cairo is self-hosted — see @font-face in resources/css/app.css. No external Google Fonts request. -->
+    <link rel="preload" as="font" type="font/woff2" href="{{ asset('fonts/cairo/cairo-400.woff2') }}" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="{{ asset('fonts/cairo/cairo-700.woff2') }}" crossorigin>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

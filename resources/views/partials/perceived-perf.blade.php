@@ -28,13 +28,8 @@
         transition: width 260ms cubic-bezier(0.1, 0.5, 0.2, 1);
     }
 
-    @media (prefers-reduced-motion: no-preference) {
-        @keyframes lharba-page-in {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-        }
-        main { animation: lharba-page-in 180ms ease-out; }
-    }
+    /* Page fade-in removed — was adding 180ms of perceived delay on every nav,
+       compounding with content-render time on slow mobile. Pages now appear instantly. */
 </style>
 
 <div id="lharba-progress" aria-hidden="true"></div>

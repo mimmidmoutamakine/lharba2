@@ -3,9 +3,74 @@
 @section('title', 'Goethe B1 Lesen | ' . config('app.name'))
 @section('description', 'Goethe B1 Leseverstehen — interaktive Übungen mit sofortigem Feedback.')
 
+@push('head')
+<style>
+    /* Sliding teil-filter indicator. Class added after first paint so the initial
+       position snap is instant, not animated from origin. */
+    .lharba-teil-indicator--animate {
+        transition: transform 400ms cubic-bezier(0.85, 0, 0.15, 1),
+                    width     400ms cubic-bezier(0.85, 0, 0.15, 1),
+                    height    400ms cubic-bezier(0.85, 0, 0.15, 1),
+                    opacity   200ms ease;
+    }
+
+    /* Card entry — opacity+transform only, no filter:blur (mobile GPU-friendly). */
+    @media (prefers-reduced-motion: no-preference) {
+        @keyframes lharba-card-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-stagger {
+            animation: lharba-card-in 280ms ease-out
+                       calc(var(--card-i, 0) * 22ms) backwards;
+        }
+    }
+    /* Skip layout/paint for offscreen cards — modern browsers, gracefully degrades. */
+    .card-stagger {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 220px;
+    }
+</style>
+@endpush
+
 @section('content')
 
-<div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 pb-16">
+@php
+    $teilOptions = [
+        null    => ['الكل', 'الكل'],
+        'teil1' => ['T1', 'Teil 1'],
+        'teil2' => ['T2', 'Teil 2'],
+        'teil3' => ['T3', 'Teil 3'],
+        'teil4' => ['T4', 'Teil 4'],
+        'teil5' => ['T5', 'Teil 5'],
+    ];
+    $teilFullNames = [
+        'teil1' => 'Teil 1 · Richtig/Falsch',
+        'teil2' => 'Teil 2 · Multiple Choice',
+        'teil3' => 'Teil 3 · Zuordnung',
+        'teil4' => 'Teil 4 · Dafür/Dagegen',
+        'teil5' => 'Teil 5 · Multiple Choice',
+    ];
+    $teilDurations = [
+        'teil1' => 15,
+        'teil2' => 15,
+        'teil3' => 15,
+        'teil4' => 10,
+        'teil5' => 10,
+    ];
+    // Render every (topic, teil) tuple — filter happens client-side via Alpine.
+    $cardItems = [];
+    foreach ($topics ?? [] as $t) {
+        foreach (array_keys($teilFullNames) as $tk) {
+            if (empty($t->$tk)) continue;
+            $cardItems[] = [$t, $tk];
+        }
+    }
+@endphp
+
+<div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 pb-16"
+     x-data="goetheB1LesenIndex({{ json_encode($teil ?? '') }})"
+     x-init="init()">
 
     {{-- Header --}}
     <div class="mb-10" dir="rtl">
@@ -19,82 +84,54 @@
         <p class="text-slate-400 max-w-2xl">كل اختبار فيه 5 أجزاء: Teil 1 (Richtig/Falsch), Teil 2 (Multiple Choice — 2 نصوص), Teil 3 (Zuordnung), Teil 4 (Dafür / Dagegen), Teil 5 (Multiple Choice).</p>
     </div>
 
-    @php
-        $teilOptions = [
-            null    => ['الكل', 'الكل'],
-            'teil1' => ['T1', 'Teil 1'],
-            'teil2' => ['T2', 'Teil 2'],
-            'teil3' => ['T3', 'Teil 3'],
-            'teil4' => ['T4', 'Teil 4'],
-            'teil5' => ['T5', 'Teil 5'],
-        ];
-        $teilFullNames = [
-            'teil1' => 'Teil 1 · Richtig/Falsch',
-            'teil2' => 'Teil 2 · Multiple Choice',
-            'teil3' => 'Teil 3 · Zuordnung',
-            'teil4' => 'Teil 4 · Dafür/Dagegen',
-            'teil5' => 'Teil 5 · Multiple Choice',
-        ];
-        $teilDurations = [
-            'teil1' => 15,
-            'teil2' => 15,
-            'teil3' => 15,
-            'teil4' => 10,
-            'teil5' => 10,
-        ];
-        $cardItems = [];
-        foreach ($topics ?? [] as $t) {
-            foreach (array_keys($teilFullNames) as $tk) {
-                if (empty($t->$tk)) continue;
-                if ($teil && $teil !== $tk) continue;
-                $cardItems[] = [$t, $tk];
-            }
-        }
-    @endphp
-
-    {{-- Teil filter --}}
+    {{-- Teil filter (client-side, no JS-measured indicator — buttons paint their own state) --}}
     <div class="mb-6 p-3 md:p-5 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent backdrop-blur-sm shadow-lg shadow-black/20">
         <div class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 mb-2" dir="rtl">الجزء (Teil)</div>
         <div class="grid grid-cols-6 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
             @foreach($teilOptions as $val => [$short, $full])
-            @php $isActive = ($teil ?? null) === $val; @endphp
-            <a href="{{ route('goethe-b1.lesen.index', $val ? ['teil' => $val] : []) }}"
-               class="relative px-2 md:px-4 py-1.5 md:py-2 rounded-xl text-[12px] md:text-sm font-semibold whitespace-nowrap transition-all duration-300 ease-out text-center
-                      {{ $isActive
-                          ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30 scale-[1.02]'
-                          : 'text-slate-400 hover:text-white hover:bg-white/[0.06] hover:scale-[1.02] active:scale-[0.98]' }}">
+            <button type="button"
+                    @click="setTeil('{{ $val ?? '' }}')"
+                    class="relative z-10 px-2 md:px-4 py-1.5 md:py-2 rounded-xl text-[12px] md:text-sm font-semibold whitespace-nowrap transition-all duration-200 text-center"
+                    :class="currentTeil === '{{ $val ?? '' }}'
+                        ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
+                        : 'text-slate-400 hover:text-white'">
                 <span class="md:hidden">{{ $short }}</span>
                 <span class="hidden md:inline">{{ $full }}</span>
-            </a>
+            </button>
             @endforeach
         </div>
     </div>
 
-    {{-- Count + reset --}}
+    {{-- Count + reset (reactive) --}}
     <div class="flex items-center justify-between mb-4 text-xs text-slate-500" dir="rtl">
         <div class="flex items-center gap-2">
-            <span class="font-bold text-white text-base">{{ count($cardItems) }}</span>
+            <span class="font-bold text-white text-base tabular-nums" x-text="visibleCount"></span>
             <span>تمرين</span>
-            @if($teil)
-            <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">{{ $teilOptions[$teil][1] }}</span>
-            @endif
+            <template x-if="currentTeil">
+                <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold" x-text="teilFullLabel"></span>
+            </template>
         </div>
-        @if($teil)
-        <a href="{{ route('goethe-b1.lesen.index') }}" class="text-[11px] text-slate-500 hover:text-white transition-colors flex items-center gap-1">
+        <button type="button" @click="setTeil('')" x-show="currentTeil"
+                class="text-[11px] text-slate-500 hover:text-white transition-colors flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             مسح الفلاتر
-        </a>
-        @endif
+        </button>
     </div>
 
     {{-- Cards --}}
-    <div x-data="goetheB1LesenIndex()" x-init="hydrate()" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-        @forelse($cardItems as [$topic, $teilKey])
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        @forelse($cardItems as $idx => [$topic, $teilKey])
         @php
             $cardKey  = $topic->id . '-' . $teilKey;
             $href     = route('goethe-b1.lesen.topic', ['slug' => $topic->slug, 'teil' => $teilKey]);
         @endphp
-        <div class="group relative p-3.5 rounded-2xl border bg-[#111216] flex flex-col gap-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:bg-[#13141A]"
+        <div data-card-teil="{{ $teilKey }}"
+             style="--card-i: {{ min($idx, 24) }};"
+             x-show="cardVisible('{{ $teilKey }}')"
+             x-transition:enter="transition-opacity duration-200 ease-out"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             class="card-stagger group relative p-3.5 rounded-2xl border bg-[#111216] flex flex-col gap-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:bg-[#13141A]"
              :class="statusBorder('{{ $cardKey }}')"
              dir="ltr">
             <div class="relative flex items-center justify-between gap-2">
@@ -160,20 +197,48 @@
             </div>
         </div>
         @empty
-        <div class="sm:col-span-2 lg:col-span-3 text-center py-12 text-slate-500 text-sm" dir="rtl">
-            <p>لا توجد تمارين حالياً.</p>
-            <p class="text-xs mt-1 text-slate-600">المحتوى قادم قريباً.</p>
-        </div>
         @endforelse
+
+        {{-- Empty state — fires when DB has no topics OR client-side filter hides everything --}}
+        <div x-show="visibleCount === 0" x-cloak
+             class="sm:col-span-2 lg:col-span-3 text-center py-12 text-slate-500 text-sm" dir="rtl">
+            <p>لا توجد تمارين تطابق الفلاتر المختارة.</p>
+            <button type="button" @click="setTeil('')"
+                    class="text-xs mt-2 text-amber-400 hover:text-amber-300 transition-colors">
+                مسح الفلاتر
+            </button>
+        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-function goetheB1LesenIndex() {
+function goetheB1LesenIndex(initialTeil) {
     return {
         statuses: {},
         timer: {},
+
+        // ── Filter state ────────────────────────────────────────────
+        currentTeil: initialTeil || '',
+        indicator: { x: 0, y: 0, w: 0, h: 0 },
+        indicatorReady: false,
+        transitionsOn: false,
+        teilLabels: @json(collect($teilOptions)->map(fn ($v) => $v[1])->all()),
+
+        init() {
+            this.hydrate();
+            // First paint: snap indicator to position WITHOUT animation, then enable
+            // transitions so subsequent setTeil calls animate.
+            this.$nextTick(() => requestAnimationFrame(() => {
+                this.measureIndicator();
+                this.indicatorReady = true;
+                requestAnimationFrame(() => { this.transitionsOn = true; });
+            }));
+            window.addEventListener('resize', () => this.measureIndicator());
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => this.measureIndicator());
+            }
+        },
 
         hydrate() {
             this.statuses = (window.TopicStatus?.all()['goethe-b1-lesen']) || {};
@@ -188,6 +253,46 @@ function goetheB1LesenIndex() {
             });
         },
 
+        // ── Filter / indicator ─────────────────────────────────────
+        setTeil(val) {
+            this.currentTeil = val || '';
+            this.$nextTick(() => requestAnimationFrame(() => this.measureIndicator()));
+            const url = new URL(location.href);
+            if (this.currentTeil) url.searchParams.set('teil', this.currentTeil);
+            else                  url.searchParams.delete('teil');
+            history.replaceState(null, '', url.toString());
+        },
+
+        measureIndicator() {
+            const bar = this.$refs.teilBar;
+            if (!bar) return;
+            const active = bar.querySelector(`[data-teil-pill="${this.currentTeil}"]`);
+            if (!active) return;
+            const barRect = bar.getBoundingClientRect();
+            const rect    = active.getBoundingClientRect();
+            this.indicator = {
+                x: rect.left - barRect.left,
+                y: rect.top  - barRect.top,
+                w: rect.width,
+                h: rect.height,
+            };
+        },
+
+        cardVisible(teilKey) {
+            return !this.currentTeil || this.currentTeil === teilKey;
+        },
+
+        get visibleCount() {
+            return Array.from(document.querySelectorAll('[data-card-teil]'))
+                .filter(el => !this.currentTeil || el.getAttribute('data-card-teil') === this.currentTeil)
+                .length;
+        },
+
+        get teilFullLabel() {
+            return this.teilLabels[this.currentTeil] || '';
+        },
+
+        // ── Per-card state ─────────────────────────────────────────
         toggleStatus(key, value) {
             window.TopicStatus?.toggle('goethe-b1-lesen', key, value);
         },

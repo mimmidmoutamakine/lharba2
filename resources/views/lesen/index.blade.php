@@ -17,17 +17,22 @@
                     opacity   200ms ease;
     }
 
-    /* Ninja-flavored card entry: emerge from shadow, settle into place. */
+    /* Card entry: lighter than before — no filter:blur (was a 192-layer GPU bill on first paint).
+       Pure opacity+transform composite cheaply on mobile. */
     @media (prefers-reduced-motion: no-preference) {
         @keyframes lharba-card-in {
-            0%   { opacity: 0; transform: translateY(6px) scale(0.985); filter: blur(2px); }
-            60%  { opacity: 1; filter: blur(0); }
-            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
         .card-stagger {
-            animation: lharba-card-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1)
-                       calc(var(--card-i, 0) * 26ms) backwards;
+            animation: lharba-card-in 280ms ease-out
+                       calc(var(--card-i, 0) * 22ms) backwards;
         }
+    }
+    /* Skip layout/paint for offscreen cards — modern browsers, gracefully degrades. */
+    .card-stagger {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 220px;
         @keyframes lharba-card-fade {
             from { opacity: 0; transform: scale(0.97); }
             to   { opacity: 1; transform: scale(1); }
@@ -82,22 +87,14 @@
             {{-- Teil segmented control (client-side filter, sliding indicator) --}}
             <div class="min-w-0">
                 <div class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 mb-2" dir="rtl">الجزء (Teil)</div>
-                <div x-ref="teilBar"
-                     class="relative grid grid-cols-6 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
-
-                    {{-- Sliding indicator (the highlight that slides between pills) --}}
-                    <span class="lharba-teil-indicator pointer-events-none absolute top-0 left-0 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30"
-                          :class="transitionsOn ? 'lharba-teil-indicator--animate' : ''"
-                          :style="indicatorReady
-                                    ? { transform: `translate(${indicator.x}px, ${indicator.y}px)`, width: indicator.w + 'px', height: indicator.h + 'px', opacity: 1 }
-                                    : { opacity: 0 }"></span>
-
+                <div class="grid grid-cols-6 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
                     @foreach($teilOptions as $val => [$short, $full])
                     <button type="button"
-                            data-teil-pill="{{ $val ?? '' }}"
                             @click="setTeil('{{ $val ?? '' }}')"
-                            class="relative z-10 px-2 md:px-4 py-1.5 md:py-2 rounded-xl text-[12px] md:text-sm font-semibold whitespace-nowrap transition-colors duration-200 text-center"
-                            :class="currentTeil === '{{ $val ?? '' }}' ? 'text-white' : 'text-slate-400 hover:text-white'">
+                            class="relative z-10 px-2 md:px-4 py-1.5 md:py-2 rounded-xl text-[12px] md:text-sm font-semibold whitespace-nowrap transition-all duration-200 text-center"
+                            :class="currentTeil === '{{ $val ?? '' }}'
+                                ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
+                                : 'text-slate-400 hover:text-white'">
                         <span class="md:hidden">{{ $short }}</span>
                         <span class="hidden md:inline">{{ $full }}</span>
                     </button>

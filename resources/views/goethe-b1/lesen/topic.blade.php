@@ -1,6 +1,22 @@
 @extends('layouts.app')
 @section('title', $topic->title . ' | Goethe B1 Lesen | ' . config('app.name'))
 
+@push('head')
+<style>
+    /* Highlighter-pen evidence marks (only on submit, only in DE view). */
+    mark.lharba-evidence {
+        background: linear-gradient(180deg, transparent 55%, rgba(245, 158, 11, 0.32) 55%);
+        color: #fef3c7;
+        padding: 0 1px;
+        border-radius: 2px;
+    }
+    mark.lharba-evidence:hover {
+        background: linear-gradient(180deg, transparent 0%, rgba(245, 158, 11, 0.40) 0%);
+        color: #ffffff;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 md:pt-32 pb-8"
      x-data="goetheB1LesenTopic({{ json_encode([
@@ -64,7 +80,7 @@
             </div>
 
         <div class="grid lg:grid-cols-[1fr_400px] gap-6 items-start pb-28 lg:pb-0">
-            <article class="rounded-2xl border border-white/[0.08] bg-[#111216] overflow-hidden">
+            <article class="rounded-2xl border border-white/[0.08] bg-[#111216] overflow-hidden relative">
                 {{-- Blog header banner (red) when blog_name present, else generic Text label --}}
                 <template x-if="parts.teil1.blog_name">
                     <div class="bg-gradient-to-r from-rose-600 via-red-600 to-rose-600 px-5 py-3 text-center shadow-inner">
@@ -74,9 +90,21 @@
                 <template x-if="!parts.teil1.blog_name">
                     <div class="px-5 py-3 border-b border-white/[0.05] text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Text</div>
                 </template>
-                <div class="px-5 md:px-7 py-5 text-[15px] text-slate-200 leading-[1.9] space-y-4">
-                    <template x-for="(p, pi) in (parts.teil1.passage || '').split(/\n{2,}/)" :key="pi">
-                        <p x-text="p" class="whitespace-pre-line"></p>
+
+                {{-- Language toggle (only when AR translation exists) --}}
+                <template x-if="t1HasTranslation()">
+                    <button @click="langView = langView === 'ar' ? 'de' : 'ar'"
+                            class="absolute top-2 right-2 z-10 px-2 h-7 rounded-md bg-black/40 border border-white/10 text-[10px] font-black tracking-widest backdrop-blur-sm transition-all hover:bg-black/60 hover:border-amber-500/40"
+                            :class="langView === 'ar' ? 'text-amber-300' : 'text-slate-300'"
+                            :title="langView === 'ar' ? 'عرض الألمانية' : 'عرض الترجمة العربية'">
+                        <span x-text="langView === 'ar' ? 'DE' : 'ع'"></span>
+                    </button>
+                </template>
+
+                <div class="px-5 md:px-7 py-5 text-[15px] text-slate-200 leading-[1.9] space-y-4"
+                     :dir="langView === 'ar' ? 'rtl' : 'ltr'">
+                    <template x-for="(p, pi) in t1Paragraphs()" :key="langView + '-' + pi">
+                        <p x-html="t1ParagraphHtml(pi)" class="whitespace-pre-line"></p>
                     </template>
                 </div>
             </article>
@@ -85,13 +113,13 @@
             <div class="hidden lg:block space-y-2">
                 {{-- Beispiel 0 — locked worked example, mirrors the official Modelltest --}}
                 <template x-if="parts.teil1.beispiel">
-                    <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.04] p-3">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 h-5 flex items-center rounded-md bg-emerald-500/15 text-emerald-300 text-[10px] font-black tracking-widest uppercase">Beispiel</span>
-                            <span class="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-300" x-text="parts.teil1.beispiel.id"></span>
-                            <p class="text-sm text-white leading-snug flex-1" x-text="parts.teil1.beispiel.prompt"></p>
+                    <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.04] p-3" :dir="langView === 'ar' ? 'rtl' : 'ltr'">
+                        <div class="flex items-start gap-2 mb-2">
+                            <span class="px-2 h-5 flex items-center rounded-md bg-emerald-500/15 text-emerald-300 text-[10px] font-black tracking-widest uppercase mt-0.5">Beispiel</span>
+                            <span class="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-300 mt-0.5" x-text="parts.teil1.beispiel.id"></span>
+                            <p class="text-sm text-white leading-snug flex-1" x-text="t1Prompt(parts.teil1.beispiel)"></p>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 mb-2" dir="ltr">
                             <template x-for="opt in [{l:'R',label:'Richtig'}, {l:'F',label:'Falsch'}]" :key="opt.l">
                                 <div class="flex-1 h-10 rounded-lg border text-sm font-bold flex items-center justify-center"
                                      :class="parts.teil1.beispiel.answer === opt.l
@@ -101,19 +129,25 @@
                                 </div>
                             </template>
                         </div>
+                        {{-- Beispiel explanation: always shown (it's a worked example) --}}
+                        <template x-if="parts.teil1.beispiel.explanation">
+                            <div class="mt-2 px-3 py-2 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/15 text-[12.5px] leading-relaxed text-emerald-100/90" dir="rtl"
+                                 x-text="parts.teil1.beispiel.explanation"></div>
+                        </template>
                     </div>
                 </template>
 
                 <template x-for="q in parts.teil1.questions" :key="q.id">
                     <div class="rounded-xl border bg-[#111216] p-3"
-                         :class="submitted ? (answers[q.id] === q.answer ? 'border-green-500/40' : 'border-red-500/40') : (answers[q.id] !== undefined ? 'border-amber-500/40' : 'border-white/[0.08]')">
+                         :class="submitted ? (answers[q.id] === q.answer ? 'border-green-500/40' : 'border-red-500/40') : (answers[q.id] !== undefined ? 'border-amber-500/40' : 'border-white/[0.08]')"
+                         :dir="langView === 'ar' ? 'rtl' : 'ltr'">
                         <div class="flex items-start gap-2 mb-2">
                             <span class="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold mt-0.5"
                                   :class="submitted ? (answers[q.id] === q.answer ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400') : (answers[q.id] !== undefined ? 'bg-amber-600 text-white' : 'bg-white/5 text-slate-400')"
                                   x-text="q.id"></span>
-                            <p class="text-sm text-white leading-snug flex-1" x-text="q.prompt"></p>
+                            <p class="text-sm text-white leading-snug flex-1" x-text="t1Prompt(q)"></p>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2" dir="ltr">
                             <template x-for="opt in [{l:'R',label:'Richtig'}, {l:'F',label:'Falsch'}]" :key="opt.l">
                                 <button @click="!submitted && pickAnswer(q.id, opt.l)"
                                         :disabled="submitted"
@@ -127,6 +161,16 @@
                                 </button>
                             </template>
                         </div>
+
+                        {{-- Explanation block (shown after submit) --}}
+                        <template x-if="submitted && q.explanation">
+                            <div class="mt-2 px-3 py-2 rounded-lg text-[12.5px] leading-relaxed border"
+                                 :class="answers[q.id] === q.answer
+                                     ? 'bg-green-500/[0.05] border-green-500/15 text-green-100/90'
+                                     : 'bg-amber-500/[0.06] border-amber-500/20 text-amber-100/90'"
+                                 dir="rtl"
+                                 x-text="q.explanation"></div>
+                        </template>
                     </div>
                 </template>
 
@@ -225,13 +269,13 @@
             <div class="flex-1 overflow-y-auto p-3 space-y-3" style="overscroll-behavior:contain">
                 {{-- Beispiel 0 (locked) --}}
                 <template x-if="parts.teil1.beispiel">
-                    <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.04] overflow-hidden">
+                    <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.04] overflow-hidden" :dir="langView === 'ar' ? 'rtl' : 'ltr'">
                         <div class="px-4 py-3 border-b border-emerald-500/10 flex items-start gap-3">
                             <span class="px-2 h-5 flex items-center rounded-md bg-emerald-500/15 text-emerald-300 text-[10px] font-black tracking-widest uppercase mt-0.5">Beispiel</span>
                             <span class="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300 text-xs font-bold mt-0.5" x-text="parts.teil1.beispiel.id"></span>
-                            <p class="text-sm font-bold text-white leading-snug flex-1" x-text="parts.teil1.beispiel.prompt"></p>
+                            <p class="text-sm font-bold text-white leading-snug flex-1" x-text="t1Prompt(parts.teil1.beispiel)"></p>
                         </div>
-                        <div class="p-3 flex gap-2">
+                        <div class="p-3 flex gap-2" dir="ltr">
                             <template x-for="opt in [{l:'R',label:'Richtig'}, {l:'F',label:'Falsch'}]" :key="opt.l">
                                 <div class="flex-1 h-11 rounded-xl border text-sm font-bold flex items-center justify-center"
                                      :class="parts.teil1.beispiel.answer === opt.l
@@ -241,6 +285,10 @@
                                 </div>
                             </template>
                         </div>
+                        <template x-if="parts.teil1.beispiel.explanation">
+                            <div class="mx-3 mb-3 px-3 py-2 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/15 text-[12.5px] leading-relaxed text-emerald-100/90" dir="rtl"
+                                 x-text="parts.teil1.beispiel.explanation"></div>
+                        </template>
                     </div>
                 </template>
 
@@ -249,16 +297,17 @@
                          class="rounded-2xl border bg-[#111216] overflow-hidden transition-all scroll-mt-2"
                          :class="submitted
                              ? (answers[q.id] === q.answer ? 'border-green-500/40' : 'border-red-500/40')
-                             : answers[q.id] !== undefined ? 'border-white/20' : 'border-white/[0.08]'">
+                             : answers[q.id] !== undefined ? 'border-white/20' : 'border-white/[0.08]'"
+                         :dir="langView === 'ar' ? 'rtl' : 'ltr'">
                         <div class="px-4 py-3 border-b border-white/[0.05] flex items-start gap-3">
                             <span class="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold mt-0.5"
                                   :class="submitted
                                       ? (answers[q.id] === q.answer ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400')
                                       : answers[q.id] !== undefined ? 'bg-amber-600 text-white' : 'bg-white/5 text-slate-400'"
                                   x-text="q.id"></span>
-                            <p class="text-sm font-bold text-white leading-snug flex-1" x-text="q.prompt"></p>
+                            <p class="text-sm font-bold text-white leading-snug flex-1" x-text="t1Prompt(q)"></p>
                         </div>
-                        <div class="p-3 flex gap-2">
+                        <div class="p-3 flex gap-2" dir="ltr">
                             <template x-for="opt in [{l:'R',label:'Richtig'}, {l:'F',label:'Falsch'}]" :key="opt.l">
                                 <button @click="!submitted && pickAnswer(q.id, opt.l)"
                                         :disabled="submitted"
@@ -278,6 +327,16 @@
                                 </button>
                             </template>
                         </div>
+
+                        {{-- Explanation block (shown after submit) --}}
+                        <template x-if="submitted && q.explanation">
+                            <div class="mx-3 mb-3 px-3 py-2 rounded-lg text-[12.5px] leading-relaxed border"
+                                 :class="answers[q.id] === q.answer
+                                     ? 'bg-green-500/[0.05] border-green-500/15 text-green-100/90'
+                                     : 'bg-amber-500/[0.06] border-amber-500/20 text-amber-100/90'"
+                                 dir="rtl"
+                                 x-text="q.explanation"></div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -570,8 +629,87 @@ function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
 
         // Teil 1 mobile bottom sheet (questions panel)
         t1SheetOpen: false,
+        // Teil 1 language view — 'de' (German, default) | 'ar' (Arabic translation)
+        langView: 'de',
         // Teil 3 mobile sheet state (currently desktop-only chip selector — kept for future)
         t3SheetOpen: false,
+
+        // ── Teil 1 helpers: translation toggle + evidence highlight ──────────
+        t1HasTranslation() {
+            const t1 = this.parts?.teil1;
+            return Array.isArray(t1?.passage_paragraphs_ar) && t1.passage_paragraphs_ar.length > 0;
+        },
+
+        t1Paragraphs() {
+            const t1 = this.parts?.teil1;
+            if (!t1) return [];
+            if (this.langView === 'ar' && Array.isArray(t1.passage_paragraphs_ar) && t1.passage_paragraphs_ar.length) {
+                return t1.passage_paragraphs_ar;
+            }
+            return t1.passage_paragraphs || (t1.passage ? t1.passage.split(/\n{2,}/) : []);
+        },
+
+        t1AllEvidence() {
+            const t1 = this.parts?.teil1;
+            if (!t1 || !this.submitted) return [];
+            const out = [];
+            if (Array.isArray(t1.beispiel?.evidence)) out.push(...t1.beispiel.evidence);
+            for (const q of (t1.questions || [])) {
+                if (Array.isArray(q.evidence)) out.push(...q.evidence);
+            }
+            return out.filter(s => typeof s === 'string' && s.length > 0);
+        },
+
+        t1ParagraphHtml(idx) {
+            const text = this.t1Paragraphs()[idx] || '';
+            // Highlight only in German view AND after submit. Arabic translation paragraphs
+            // don't contain the German evidence substrings, so highlighting them is a no-op anyway.
+            if (this.langView !== 'de' || !this.submitted) return this._escape(text);
+            return this._highlight(text, this.t1AllEvidence());
+        },
+
+        t1Prompt(q) {
+            if (this.langView === 'ar' && q?.prompt_ar) return q.prompt_ar;
+            return q?.prompt || '';
+        },
+
+        _escape(s) {
+            const div = document.createElement('div');
+            div.textContent = String(s ?? '');
+            return div.innerHTML;
+        },
+
+        _highlight(text, evidence) {
+            if (!text) return '';
+            if (!evidence || !evidence.length) return this._escape(text);
+            const matches = [];
+            for (const ev of evidence) {
+                if (!ev) continue;
+                let pos = 0;
+                while (pos < text.length) {
+                    const i = text.indexOf(ev, pos);
+                    if (i === -1) break;
+                    matches.push({ start: i, end: i + ev.length });
+                    pos = i + 1;
+                }
+            }
+            if (!matches.length) return this._escape(text);
+            matches.sort((a, b) => a.start - b.start);
+            const merged = [];
+            for (const m of matches) {
+                const last = merged[merged.length - 1];
+                if (last && last.end >= m.start) last.end = Math.max(last.end, m.end);
+                else merged.push({ ...m });
+            }
+            let html = '', cursor = 0;
+            for (const m of merged) {
+                html += this._escape(text.slice(cursor, m.start));
+                html += '<mark class="lharba-evidence">' + this._escape(text.slice(m.start, m.end)) + '</mark>';
+                cursor = m.end;
+            }
+            html += this._escape(text.slice(cursor));
+            return html;
+        },
 
         scrollToT1Question(qid) {
             this.$nextTick(() => {

@@ -19,6 +19,11 @@
                 <label class="block text-sm font-medium text-slate-400 mb-1">كلمة المرور</label>
                 <input type="password" name="password" class="w-full px-4 py-3 rounded-xl border bg-[#0B0C10] border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500" placeholder="••••••••" dir="ltr">
             </div>
+            <label class="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
+                <input type="checkbox" name="remember" value="1" checked
+                       class="w-4 h-4 rounded border-white/20 bg-[#0B0C10] text-amber-500 focus:ring-amber-500/40 focus:ring-offset-0">
+                <span>خلني مسجل دخول</span>
+            </label>
             <button type="submit" class="btn-shine w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition-all">دخول</button>
         </form>
         <p class="mt-4 text-center text-sm text-slate-500">ما عندكش حساب؟ <a href="{{ route('register') }}" class="text-amber-400 hover:underline">سجل الآن</a></p>

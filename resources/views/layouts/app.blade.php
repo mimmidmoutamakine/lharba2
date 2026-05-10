@@ -163,7 +163,7 @@
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
                     </button>
-                    <div x-show="open" @click.outside="open = false" x-transition
+                    <div x-show="open" x-cloak @click.outside="open = false" x-transition
                          class="absolute top-12 left-1/2 -translate-x-1/2 z-50 p-3 rounded-xl border shadow-xl bg-[#111216] border-white/10 min-w-[160px]">
                         <p class="text-[10px] uppercase font-bold text-slate-500 mb-2 text-center">حجم الخط</p>
                         <div class="flex items-center justify-between gap-2">
@@ -207,7 +207,7 @@
         </div>
 
         {{-- Mobile Menu --}}
-        <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+        <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
              class="lg:hidden border-t border-white/[0.08] bg-[#08090C]/95 backdrop-blur-lg px-4 py-4 flex flex-col gap-2">
             <a href="{{ route('lesen.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Lesen</a>
             <a href="{{ route('hoeren.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Hören</a>

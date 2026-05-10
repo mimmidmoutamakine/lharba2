@@ -35,6 +35,17 @@
     src: url('/fonts/cairo/cairo-900.woff2') format('woff2');
 }
 
+/* During theme toggle: kill ALL transitions/animations for one frame so the colour swap
+   is instant instead of animating 138 light-theme overrides for 500ms. */
+.no-transition,
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+    transition: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #08090C; }

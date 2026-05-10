@@ -14,6 +14,9 @@
 
                 window.toggleTheme = function () {
                     var nowLight = !html.classList.contains('light-theme');
+                    // Kill ALL transitions/animations for the duration of the theme swap so
+                    // 138 light-theme rules don't each animate-tween over 500ms on mobile.
+                    html.classList.add('no-transition');
                     if (nowLight) {
                         html.classList.add('light-theme');
                         html.classList.remove('dark');
@@ -23,6 +26,14 @@
                         html.classList.add('dark');
                         localStorage.setItem('zertify-theme', 'dark');
                     }
+                    // Force a reflow so the no-transition rule is committed BEFORE we re-enable.
+                    void html.offsetHeight;
+                    // Two rAFs: first paint settles with new colours; second re-enables transitions.
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(function () {
+                            html.classList.remove('no-transition');
+                        });
+                    });
                     window.dispatchEvent(new CustomEvent('theme-changed', { detail: { isDark: !nowLight } }));
                 };
                 window.isLightTheme = function () { return html.classList.contains('light-theme'); };

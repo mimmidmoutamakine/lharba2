@@ -25,7 +25,7 @@
          'teil3' => $topic->teil3,
          'teil4' => $topic->teil4,
          'teil5' => $topic->teil5,
-     ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }})"
+     ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
      x-effect="_lockBodyScroll(t3SheetOpen || t1SheetOpen)"
      @keydown.escape.window="if (t1SheetOpen) t1SheetOpen = false; else if (t3SheetOpen) t3SheetOpen = false"
 >
@@ -618,9 +618,10 @@
 
 @push('scripts')
 <script>
-function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
+function goetheB1LesenTopic(parts, initialPart, timerEnabled, topicSlug) {
     return {
         parts,
+        topicSlug: topicSlug || '',
         activePart: initialPart || (parts.teil1 ? 'teil1' : (parts.teil2 ? 'teil2' : null)),
         answers: {},
         submitted: false,
@@ -720,16 +721,62 @@ function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
 
         init() {
             this.computeTotal();
+            this._loadState();
         },
 
         setActivePart(key) {
             if (!this.parts[key]) return;
+            // Save current part's progress BEFORE switching (in case user picked answers
+            // and is jumping to another part — don't lose what they've done).
+            this._saveState();
             this.activePart = key;
             this.answers = {};
             this.submitted = false;
             this.score = 0;
             this.t1SheetOpen = false;
             this.computeTotal();
+            this._loadState();
+        },
+
+        // ── localStorage persistence so accidental navigation away doesn't wipe answers ──
+        _storageKey() {
+            return 'lh.gb1l.' + this.topicSlug + '.' + (this.activePart || 'na');
+        },
+
+        _loadState() {
+            if (!this.topicSlug || !this.activePart) return;
+            try {
+                const raw = localStorage.getItem(this._storageKey());
+                if (!raw) return;
+                const state = JSON.parse(raw);
+                if (state && typeof state === 'object') {
+                    this.answers = (state.answers && typeof state.answers === 'object') ? state.answers : {};
+                    this.submitted = !!state.submitted;
+                    this.score = Number(state.score) || 0;
+                }
+            } catch (e) { /* corrupt storage entry — ignore */ }
+        },
+
+        _saveState() {
+            if (!this.topicSlug || !this.activePart) return;
+            try {
+                // Don't write empty unsubmitted state — would just spam localStorage.
+                if (!this.submitted && Object.keys(this.answers).length === 0) {
+                    localStorage.removeItem(this._storageKey());
+                    return;
+                }
+                localStorage.setItem(this._storageKey(), JSON.stringify({
+                    answers: this.answers,
+                    submitted: this.submitted,
+                    score: this.score,
+                    savedAt: Date.now(),
+                }));
+            } catch (e) { /* quota exceeded etc. — ignore */ }
+        },
+
+        _clearState() {
+            if (!this.topicSlug || !this.activePart) return;
+            try { localStorage.removeItem(this._storageKey()); } catch (e) {}
         },
 
         computeTotal() {
@@ -744,6 +791,7 @@ function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
             if (this.submitted) return;
             this.answers[id] = value;
             this.answers = { ...this.answers };
+            this._saveState();
         },
 
         // Teil 3: chip selector — auto-swap on conflict (except '0' which is reusable)
@@ -760,6 +808,7 @@ function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
             }
             this.answers[situationId] = letter;
             this.answers = { ...this.answers };
+            this._saveState();
         },
 
         adAssignedTo(letter) {
@@ -783,6 +832,7 @@ function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
             }
             this.score = correct;
             this.submitted = true;
+            this._saveState();
             // Scroll to top to show the score bar
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
         },
@@ -791,6 +841,7 @@ function goetheB1LesenTopic(parts, initialPart, timerEnabled) {
             this.answers = {};
             this.submitted = false;
             this.score = 0;
+            this._clearState();
         },
 
         _lockBodyScroll(locked) {

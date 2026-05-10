@@ -9,7 +9,7 @@
          'teil3'           => $topic->teil3,
          'sprachbausteine1'=> $topic->sprachbausteine1,
          'sprachbausteine2'=> $topic->sprachbausteine2,
-     ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }})"
+     ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
      x-effect="_lockBodyScroll(t3SheetOpen || sheetOpen || qSheetOpen || sb1SheetOpen || sb2SheetOpen)"
      @keydown.escape.window="
         if (t3SheetOpen)  t3SheetOpen  = false;
@@ -77,7 +77,7 @@
                 <div class="space-y-0.5">
                     @foreach($partLabels as $key => $label)
                         @if($topic->$key)
-                        <button @click="activePart = '{{ $key }}'; reset(); partMenuOpen = false"
+                        <button @click="setActivePart('{{ $key }}'); partMenuOpen = false"
                                 class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                                 :class="activePart === '{{ $key }}' ? 'bg-amber-500/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'">
                             <span>{{ $label }}</span>
@@ -1858,9 +1858,10 @@
 
 @push('scripts')
 <script>
-function lesenTopic(parts, initialPart, timerEnabled) {
+function lesenTopic(parts, initialPart, timerEnabled, topicSlug) {
     return {
         parts,
+        topicSlug: topicSlug || '',
         activePart: (initialPart && parts[initialPart]) ? initialPart : (Object.keys(parts).find(k => parts[k]) ?? 'teil1'),
         // ── Countdown timer (auto-submit when ?timer=1 is in the URL) ─
         timerEnabled: !!timerEnabled,
@@ -1914,7 +1915,62 @@ function lesenTopic(parts, initialPart, timerEnabled) {
             return segs.find(s => typeof s === 'object' && s !== null && s.id === this.activeBlank) ?? null;
         },
 
-        init() { this.setupPart(); },
+        init() {
+            this.setupPart();
+            this._loadState();
+            // Auto-persist on every answer / submit change.
+            this.$watch('answers',   () => this._saveState());
+            this.$watch('submitted', () => this._saveState());
+        },
+
+        // Switch part with state preservation: save current, switch, load saved for new part.
+        setActivePart(key) {
+            if (!this.parts[key]) return;
+            this._saveState();
+            this.activePart = key;
+            this.setupPart();
+            this._loadState();
+        },
+
+        // ── localStorage persistence so accidental navigation doesn't wipe answers ──
+        _storageKey() {
+            return 'lh.tlc-lesen.' + this.topicSlug + '.' + (this.activePart || 'na');
+        },
+
+        _loadState() {
+            if (!this.topicSlug || !this.activePart) return;
+            try {
+                const raw = localStorage.getItem(this._storageKey());
+                if (!raw) return;
+                const state = JSON.parse(raw);
+                if (state && typeof state === 'object') {
+                    this.answers   = (state.answers && typeof state.answers === 'object') ? state.answers : {};
+                    this.submitted = !!state.submitted;
+                    this.score     = Number(state.score) || 0;
+                }
+            } catch (e) { /* corrupt entry — ignore */ }
+        },
+
+        _saveState() {
+            if (!this.topicSlug || !this.activePart) return;
+            try {
+                if (!this.submitted && Object.keys(this.answers).length === 0) {
+                    localStorage.removeItem(this._storageKey());
+                    return;
+                }
+                localStorage.setItem(this._storageKey(), JSON.stringify({
+                    answers: this.answers,
+                    submitted: this.submitted,
+                    score: this.score,
+                    savedAt: Date.now(),
+                }));
+            } catch (e) { /* quota or disabled — ignore */ }
+        },
+
+        _clearState() {
+            if (!this.topicSlug || !this.activePart) return;
+            try { localStorage.removeItem(this._storageKey()); } catch (e) {}
+        },
 
         setupPart() {
             this._stopTimer();
@@ -2357,7 +2413,7 @@ function lesenTopic(parts, initialPart, timerEnabled) {
             this._paraScrollHandler();
         },
 
-        reset() { this.setupPart(); },
+        reset() { this._clearState(); this.setupPart(); },
 
         // ── Click interactions ──────────────────────────────────────
         selectText(id) {

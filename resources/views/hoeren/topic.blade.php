@@ -205,6 +205,13 @@ function hoerenTopic(opts) {
             return 0;
         },
 
+        init() {
+            this._loadState();
+            this.$watch('answers',   () => this._saveState());
+            this.$watch('picks',     () => this._saveState());
+            this.$watch('submitted', () => this._saveState());
+        },
+
         pick(i, value) {
             if (this.submitted) return;
             this.answers[i] = value;
@@ -237,6 +244,52 @@ function hoerenTopic(opts) {
             this.picks     = [];
             this.submitted = false;
             this.score     = 0;
+            this._clearState();
+        },
+
+        // ── localStorage persistence so accidental navigation doesn't wipe answers ──
+        _storageKey() {
+            return 'lh.hoeren.' + this.slug + '.t' + this.teil;
+        },
+
+        _loadState() {
+            if (!this.slug) return;
+            try {
+                const raw = localStorage.getItem(this._storageKey());
+                if (!raw) return;
+                const state = JSON.parse(raw);
+                if (state && typeof state === 'object') {
+                    this.answers   = (state.answers && typeof state.answers === 'object') ? state.answers : {};
+                    this.picks     = Array.isArray(state.picks) ? state.picks : [];
+                    this.submitted = !!state.submitted;
+                    this.score     = Number(state.score) || 0;
+                }
+            } catch (e) { /* ignore corrupt entry */ }
+        },
+
+        _saveState() {
+            if (!this.slug) return;
+            try {
+                const empty = !this.submitted
+                    && Object.keys(this.answers).length === 0
+                    && this.picks.length === 0;
+                if (empty) {
+                    localStorage.removeItem(this._storageKey());
+                    return;
+                }
+                localStorage.setItem(this._storageKey(), JSON.stringify({
+                    answers: this.answers,
+                    picks: this.picks,
+                    submitted: this.submitted,
+                    score: this.score,
+                    savedAt: Date.now(),
+                }));
+            } catch (e) { /* quota or disabled — ignore */ }
+        },
+
+        _clearState() {
+            if (!this.slug) return;
+            try { localStorage.removeItem(this._storageKey()); } catch (e) {}
         },
 
         formatNumbers(arr) {

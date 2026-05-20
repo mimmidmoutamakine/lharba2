@@ -2,14 +2,20 @@
 @section('title', $topic->title . ' | Lesen | ' . config('app.name'))
 
 @section('content')
+@php
+    // Only the active teil's JSON is shipped to the browser. Other slots are null;
+    // switching parts is a URL navigation (anchor link), which reloads the page with
+    // that part's JSON only. Cuts initial DOM payload to ~1/5 of the previous size.
+    $partsPayload = [
+        'teil1'            => $activePart === 'teil1' ? $activePartData : null,
+        'teil2'            => $activePart === 'teil2' ? $activePartData : null,
+        'teil3'            => $activePart === 'teil3' ? $activePartData : null,
+        'sprachbausteine1' => $activePart === 'sprachbausteine1' ? $activePartData : null,
+        'sprachbausteine2' => $activePart === 'sprachbausteine2' ? $activePartData : null,
+    ];
+@endphp
 <div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 md:pt-32 pb-8"
-     x-data="lesenTopic({{ json_encode([
-         'teil1'           => $topic->teil1,
-         'teil2'           => $topic->teil2,
-         'teil3'           => $topic->teil3,
-         'sprachbausteine1'=> $topic->sprachbausteine1,
-         'sprachbausteine2'=> $topic->sprachbausteine2,
-     ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
+     x-data="lesenTopic({{ json_encode($partsPayload) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
      x-effect="_lockBodyScroll(t3SheetOpen || sheetOpen || qSheetOpen || sb1SheetOpen || sb2SheetOpen)"
      @keydown.escape.window="
         if (t3SheetOpen)  t3SheetOpen  = false;
@@ -76,15 +82,20 @@
 
                 <div class="space-y-0.5">
                     @foreach($partLabels as $key => $label)
-                        @if($topic->$key)
-                        <button @click="setActivePart('{{ $key }}'); partMenuOpen = false"
-                                class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                                :class="activePart === '{{ $key }}' ? 'bg-amber-500/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'">
+                        @if($topic->{'has_' . $key})
+                        {{-- Anchor navigation: each teil reloads the page so only that
+                             teil's JSON is shipped. Preserves ?timer state. --}}
+                        <a href="{{ route('lesen.topic', array_filter(['slug' => $topic->slug, 'teil' => $key, 'timer' => request('timer') ? 1 : null])) }}"
+                           class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                           @class([
+                                'bg-amber-500/20 text-white' => $activePart === $key,
+                                'text-slate-400 hover:text-white hover:bg-white/5' => $activePart !== $key,
+                           ])>
                             <span>{{ $label }}</span>
-                            <template x-if="activePart === '{{ $key }}'">
+                            @if($activePart === $key)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400"><path d="M20 6 9 17l-5-5"/></svg>
-                            </template>
-                        </button>
+                            @endif
+                        </a>
                         @endif
                     @endforeach
                 </div>

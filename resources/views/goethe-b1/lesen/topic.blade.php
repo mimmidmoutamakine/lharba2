@@ -18,14 +18,20 @@
 @endpush
 
 @section('content')
+@php
+    // Only the active teil's JSON is shipped to the browser. Other slots are null;
+    // switching parts is a URL navigation (anchor link), which reloads the page with
+    // that part's JSON only.
+    $partsPayload = [
+        'teil1' => $activePart === 'teil1' ? $activePartData : null,
+        'teil2' => $activePart === 'teil2' ? $activePartData : null,
+        'teil3' => $activePart === 'teil3' ? $activePartData : null,
+        'teil4' => $activePart === 'teil4' ? $activePartData : null,
+        'teil5' => $activePart === 'teil5' ? $activePartData : null,
+    ];
+@endphp
 <div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 md:pt-32 pb-8"
-     x-data="goetheB1LesenTopic({{ json_encode([
-         'teil1' => $topic->teil1,
-         'teil2' => $topic->teil2,
-         'teil3' => $topic->teil3,
-         'teil4' => $topic->teil4,
-         'teil5' => $topic->teil5,
-     ]) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
+     x-data="goetheB1LesenTopic({{ json_encode($partsPayload) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
      x-effect="_lockBodyScroll(t3SheetOpen || t1SheetOpen)"
      @keydown.escape.window="if (t1SheetOpen) t1SheetOpen = false; else if (t3SheetOpen) t3SheetOpen = false"
 >
@@ -40,9 +46,15 @@
         </a>
         <div class="px-1 h-9 flex items-center gap-0.5 rounded-full bg-[#111216]/85 backdrop-blur border border-white/10 shadow-lg shadow-black/30">
             @foreach($partLabels as $key => $label)
-            <button type="button" @click="setActivePart('{{ $key }}')"
-                    :class="activePart === '{{ $key }}' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'"
-                    class="px-2 h-7 rounded-full text-[11px] font-bold transition-all">{{ str_replace('Teil ', 'T', $label) }}</button>
+                @if($topic->{'has_' . $key})
+                {{-- Anchor navigation: reloads the page with only this teil's JSON. --}}
+                <a href="{{ route('goethe-b1.lesen.topic', array_filter(['slug' => $topic->slug, 'teil' => $key, 'timer' => request('timer') ? 1 : null])) }}"
+                   @class([
+                        'px-2 h-7 flex items-center rounded-full text-[11px] font-bold transition-all',
+                        'bg-amber-600 text-white' => $activePart === $key,
+                        'text-slate-400 hover:text-white' => $activePart !== $key,
+                   ])>{{ str_replace('Teil ', 'T', $label) }}</a>
+                @endif
             @endforeach
         </div>
     </div>

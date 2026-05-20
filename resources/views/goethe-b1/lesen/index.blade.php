@@ -62,7 +62,8 @@
     $cardItems = [];
     foreach ($topics ?? [] as $t) {
         foreach (array_keys($teilFullNames) as $tk) {
-            if (empty($t->$tk)) continue;
+            // has_* booleans projected by controller — avoids loading JSON blobs.
+            if (! $t->{'has_' . $tk}) continue;
             $cardItems[] = [$t, $tk];
         }
     }

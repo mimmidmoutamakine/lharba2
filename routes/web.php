@@ -34,7 +34,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Users management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->name('index');
-        Route::post('/{user}/toggle-admin', [AdminUserController::class, 'toggleAdmin'])->name('toggleAdmin');
+        Route::post('/{user}/toggle-admin',   [AdminUserController::class, 'toggleAdmin'])->name('toggleAdmin');
+        Route::post('/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('resetPassword');
     });
 
     // Lesen management

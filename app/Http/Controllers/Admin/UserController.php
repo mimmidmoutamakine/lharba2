@@ -37,4 +37,20 @@ class UserController extends Controller
 
         return back()->with('ok', $user->is_admin ? "{$user->name} ولا أدمن." : "تنحت من {$user->name} صلاحية الأدمن.");
     }
+
+    public function resetPassword(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'max:72'],
+        ]);
+
+        // The User model's 'hashed' cast handles hashing on save.
+        $user->password = $data['password'];
+        $user->setRememberToken(\Illuminate\Support\Str::random(60));
+        $user->save();
+
+        // Surface the new password back to the admin so they can hand it off.
+        // Flash via session — not logged, not persisted.
+        return back()->with('ok', "تبدّل الباسوورد ديال {$user->name} ({$user->email}). الجديد: " . $data['password']);
+    }
 }

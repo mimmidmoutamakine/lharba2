@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\LesenTopic;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
@@ -30,9 +31,19 @@ class LesenController extends Controller
         $level = $approvedLevel ?: $request->level;
         $teil  = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : null;
 
+        // Index only renders metadata + per-teil availability flags.
+        // Skip the heavy JSON columns to avoid loading + casting 5 blobs per row.
         $topics = LesenTopic::where('is_published', true)
             ->when($level, fn ($q) => $q->where('level', $level))
             ->when($teil,  fn ($q) => $q->whereNotNull($teil))
+            ->select([
+                'id', 'slug', 'title', 'title_ar', 'level',
+                DB::raw('(teil1 IS NOT NULL) AS has_teil1'),
+                DB::raw('(teil2 IS NOT NULL) AS has_teil2'),
+                DB::raw('(teil3 IS NOT NULL) AS has_teil3'),
+                DB::raw('(sprachbausteine1 IS NOT NULL) AS has_sprachbausteine1'),
+                DB::raw('(sprachbausteine2 IS NOT NULL) AS has_sprachbausteine2'),
+            ])
             ->orderBy('level')
             ->orderBy('title')
             ->get();
@@ -47,13 +58,34 @@ class LesenController extends Controller
             return view('content.coming-soon', ['access' => $user->currentAccess()]);
         }
 
-        $topic = LesenTopic::where('slug', $slug)->where('is_published', true)->firstOrFail();
+        // Pull metadata + per-teil availability flags only (no JSON yet).
+        $hasFlagCols = array_map(
+            fn ($c) => DB::raw("({$c} IS NOT NULL) AS has_{$c}"),
+            self::TEIL_COLUMNS
+        );
+        $topic = LesenTopic::where('slug', $slug)->where('is_published', true)
+            ->select(array_merge(['id', 'slug', 'title', 'title_ar', 'level'], $hasFlagCols))
+            ->firstOrFail();
+
         if (! $user->is_admin && $user->contentLevel() && $topic->level !== $user->contentLevel()) {
             abort(403, 'هاد الموضوع خارج نطاق الوصول ديالك.');
         }
-        $activePart   = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : null;
+
+        // Resolve active part: requested (if exists) → first available teil.
+        $requested  = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : null;
+        $activePart = ($requested && $topic->{'has_' . $requested})
+            ? $requested
+            : collect(self::TEIL_COLUMNS)->first(fn ($t) => (bool) $topic->{'has_' . $t});
+
+        // Load JSON only for the active part — second tiny query by primary key.
+        $activePartData = null;
+        if ($activePart) {
+            $raw = LesenTopic::where('id', $topic->id)->value($activePart);
+            $activePartData = is_string($raw) ? json_decode($raw, true) : $raw;
+        }
+
         $timerEnabled = $request->boolean('timer');
-        return view('lesen.topic', compact('topic', 'activePart', 'timerEnabled'));
+        return view('lesen.topic', compact('topic', 'activePart', 'activePartData', 'timerEnabled'));
     }
 
     public function submit(Request $request, string $slug)

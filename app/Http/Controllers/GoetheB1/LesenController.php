@@ -35,6 +35,9 @@ class LesenController extends Controller
 
         // Index only renders metadata + per-teil availability flags.
         // Skip the heavy JSON columns to avoid loading + casting 5 blobs per row.
+        // Paginate to keep mobile DOM small: ~40 cards/page max (8 topics × 5 teils
+        // when no teil filter; 40 topics × 1 teil when filtered).
+        $perPage = $teil ? 40 : 8;
         $topics = GoetheB1LesenTopic::where('is_published', true)
             ->when($teil, fn ($q) => $q->whereNotNull($teil))
             ->select([
@@ -46,7 +49,8 @@ class LesenController extends Controller
                 DB::raw('(teil5 IS NOT NULL) AS has_teil5'),
             ])
             ->orderBy('title')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('goethe-b1.lesen.index', compact('topics', 'teil'));
     }

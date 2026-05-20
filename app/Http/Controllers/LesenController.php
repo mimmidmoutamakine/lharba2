@@ -33,6 +33,9 @@ class LesenController extends Controller
 
         // Index only renders metadata + per-teil availability flags.
         // Skip the heavy JSON columns to avoid loading + casting 5 blobs per row.
+        // Paginate to keep mobile DOM small: ~40 cards/page max (8 topics × 5 teils
+        // when no teil filter; 40 topics × 1 teil when filtered).
+        $perPage = $teil ? 40 : 8;
         $topics = LesenTopic::where('is_published', true)
             ->when($level, fn ($q) => $q->where('level', $level))
             ->when($teil,  fn ($q) => $q->whereNotNull($teil))
@@ -46,7 +49,8 @@ class LesenController extends Controller
             ])
             ->orderBy('level')
             ->orderBy('title')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('lesen.index', compact('topics', 'teil'));
     }

@@ -17,6 +17,34 @@
             </div>
             <h1 class="text-2xl md:text-3xl font-bold text-white">شنو حفظت، شنو خاصك تراجع، ومنين تبدا</h1>
             <p class="text-slate-400 text-sm mt-1">نظرة سريعة على تقدّمك · all data is stored locally on your device</p>
+
+            {{-- Download printable PDF plan, with optional week-count selector --}}
+            <div class="mt-3 inline-flex items-center gap-1 p-1 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-700/10 border border-emerald-500/30"
+                 x-data="{ weeks: 4, open: false }">
+                <a :href="'{{ route('plan.pdf') }}?weeks=' + weeks{{ $level ? " + '&level={$level}'" : '' }}"
+                   class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-all active:scale-95"
+                   target="_blank" rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>تحميل الخطة PDF</span>
+                </a>
+                <div class="relative" @click.outside="open = false">
+                    <button @click="open = !open" type="button"
+                            class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-emerald-300 hover:bg-emerald-500/15 text-[11px] font-bold transition-all">
+                        <span x-text="weeks + ' أسابيع'"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :class="open ? 'rotate-180' : ''" class="transition-transform"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition
+                         class="absolute top-full mt-1 right-0 min-w-[140px] bg-[#0B0C10] border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-1 z-20">
+                        @foreach([2 => 'سريعة · أسبوعين', 4 => 'متوسطة · 4 أسابيع', 6 => 'مريحة · 6 أسابيع', 8 => 'طويلة · 8 أسابيع'] as $n => $label)
+                        <button @click="weeks = {{ $n }}; open = false" type="button"
+                                class="block w-full text-right px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                                :class="weeks === {{ $n }} ? 'bg-emerald-500/15 text-emerald-200 font-bold' : ''">
+                            {{ $label }}
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{-- Level filter — locked to user's approved level (admins can switch) --}}

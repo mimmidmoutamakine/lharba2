@@ -126,7 +126,7 @@
                     Lesen
                 </a>
                 <a href="{{ route('hoeren.index') }}"
-                   class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap {{ request()->routeIs('hoeren*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
+                   class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap {{ request()->routeIs('hoeren.*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
                     Hören
                 </a>
                 <a href="{{ route('schreiben.index') }}"

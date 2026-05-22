@@ -45,10 +45,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::patch('/{topic}/toggle', [AdminController::class, 'lesenToggle'])->name('toggle');
     });
 
-    // Hören management
+    // Hören management (rebuilt — modules + codes + exams + statements)
     Route::prefix('hoeren')->name('hoeren.')->group(function () {
-        Route::get('/', [AdminController::class, 'hoerenIndex'])->name('index');
-        Route::delete('/{topic}', [AdminController::class, 'hoerenDestroy'])->name('destroy');
+        Route::get('/',         [AdminController::class, 'hoerenIndex'])->name('index');
+        Route::get('/import',   [AdminController::class, 'hoerenImportShow'])->name('import.show');
+        Route::post('/import',  [AdminController::class, 'hoerenImportHandle'])->name('import.handle');
+        Route::post('/exams/{exam}/audio',   [AdminController::class, 'hoerenExamAudioUpload'])->name('exam.audio.upload');
+        Route::delete('/exams/{exam}/audio', [AdminController::class, 'hoerenExamAudioDelete'])->name('exam.audio.delete');
     });
 
     // Goethe B1 Lesen management
@@ -107,12 +110,29 @@ Route::middleware(['auth', 'has.access'])->group(function () {
         Route::get('/{slug}/result', [LesenController::class, 'result'])->name('result');
     });
 
+    // Hören (rebuilt — modules per (level, teil), two sections each)
     Route::prefix('hoeren')->name('hoeren.')->group(function () {
+        // Default landing → teil1 imtihanat (the heaviest section, but capped & paginated)
         Route::get('/', [HoerenController::class, 'index'])->name('index');
-        Route::get('/{slug}', [HoerenController::class, 'topic'])->name('topic');
-        Route::post('/{slug}/submit', [HoerenController::class, 'submit'])
-            ->middleware('throttle:30,1')
-            ->name('submit');
+
+        // PDF (Richtig-only) — must come before /{teil} to avoid shadowing
+        Route::get('/pdf-all',        [HoerenController::class, 'pdfAll'])->name('pdf.all');
+        Route::get('/{teil}/pdf',     [HoerenController::class, 'pdf'])
+            ->where('teil', 'teil1|teil2|teil3')
+            ->name('pdf');
+
+        // Sections
+        Route::get('/{teil}/learn',      [HoerenController::class, 'learn'])
+            ->where('teil', 'teil1|teil2|teil3')
+            ->name('learn');
+        Route::get('/{teil}/imtihanat',  [HoerenController::class, 'imtihanat'])
+            ->where('teil', 'teil1|teil2|teil3')
+            ->name('imtihanat');
+
+        // Single exam page
+        Route::get('/{teil}/exam/{exam:slug}', [HoerenController::class, 'exam'])
+            ->where('teil', 'teil1|teil2|teil3')
+            ->name('exam');
     });
 
     Route::prefix('schreiben')->name('schreiben.')->group(function () {
@@ -142,7 +162,8 @@ Route::middleware(['auth', 'has.access'])->group(function () {
         Route::get('/{slug}',      [MundlichB2PlanningController::class, 'topic'])->name('topic');
     });
 
-    Route::get('/plan', [PlanController::class, 'index'])->name('plan');
+    Route::get('/plan',     [PlanController::class, 'index'])->name('plan');
+    Route::get('/plan/pdf', [PlanController::class, 'pdf'])->name('plan.pdf');
 
     Route::prefix('simulation')->name('simulation.')->group(function () {
         Route::get('/', [SimulationController::class, 'index'])->name('index');

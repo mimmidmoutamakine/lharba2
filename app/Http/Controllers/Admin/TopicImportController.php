@@ -12,17 +12,18 @@ class TopicImportController extends Controller
 
     public function showImport(string $type)
     {
-        abort_unless(in_array($type, ['lesen', 'hoeren', 'schreiben']), 404);
+        // Hören uses its own dedicated import flow (see HoerenImportService + artisan command).
+        abort_unless(in_array($type, ['lesen', 'schreiben']), 404);
         return view('admin.import', compact('type'));
     }
 
     public function handleImport(Request $request, string $type)
     {
-        abort_unless(in_array($type, ['lesen', 'hoeren', 'schreiben']), 404);
+        abort_unless(in_array($type, ['lesen', 'schreiben']), 404);
 
-        // Schreiben & Hören both work as single bulk imports — each entry is one full topic.
+        // Schreiben works as a single bulk import — each entry is one full topic.
         // Lesen still uses the per-Teil column update flow below.
-        if (in_array($type, ['schreiben', 'hoeren'], true)) {
+        if ($type === 'schreiben') {
             $request->validate([
                 'source'    => 'required|in:json_text,json_file',
                 'json_text' => 'required_if:source,json_text|nullable|string',
@@ -33,9 +34,7 @@ class TopicImportController extends Controller
                 ? $request->json_text
                 : file_get_contents($request->file('file')->getRealPath());
 
-            $result = $type === 'schreiben'
-                ? $this->importer->importSchreibenFromJson($json)
-                : $this->importer->importHoerenFromJson($json);
+            $result = $this->importer->importSchreibenFromJson($json);
 
             session()->flash('import_result', $result);
             return redirect()->route('admin.import.show', $type);

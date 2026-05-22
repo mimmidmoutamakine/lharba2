@@ -9,7 +9,7 @@
     @php
         $stats = [
             ['label' => 'مواضيع Lesen (Telc)', 'value' => $lesenCount,         'color' => 'amber',  'href' => route('admin.lesen.index')],
-            ['label' => 'مواضيع Hören',        'value' => $hoerenCount,        'color' => 'orange', 'href' => route('admin.hoeren.index')],
+            ['label' => 'وحدات Hören',         'value' => $hoerenCount,        'color' => 'orange', 'href' => route('admin.hoeren.index')],
             ['label' => 'Goethe B1 Lesen',     'value' => $goetheB1LesenCount, 'color' => 'amber',  'href' => route('admin.goethe-b1.lesen.index')],
         ];
     @endphp
@@ -59,22 +59,21 @@
     </div>
 
     <div class="rounded-2xl border bg-[#111216] border-white/[0.08] overflow-hidden">
-        <div class="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
-            <h3 class="font-bold text-white text-sm">آخر مواضيع Hören</h3>
-            <a href="{{ route('admin.hoeren.index') }}" class="text-xs text-amber-400 hover:underline">عرض الكل</a>
+        <div class="px-5 py-4 border-b border-white/[0.05]">
+            <h3 class="font-bold text-white text-sm">وحدات Hören (إعادة بناء)</h3>
         </div>
-        @forelse($hoerenRecent as $topic)
+        @forelse($hoerenRecent as $module)
         <div class="px-5 py-3 border-b border-white/[0.03] last:border-0 flex items-center justify-between gap-3">
             <div class="min-w-0">
-                <div class="text-sm text-white truncate">{{ $topic->title }}</div>
-                <div class="text-xs text-slate-500">{{ $topic->category }} · {{ $topic->created_at->diffForHumans() }}</div>
+                <div class="text-sm text-white truncate">Teil {{ $module->teil }} · {{ $module->level }}</div>
+                <div class="text-xs text-slate-500">{{ $module->subtitle }} · {{ $module->created_at?->diffForHumans() }}</div>
             </div>
-            <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold border {{ $topic->level === 'B2' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400' }}">
-                {{ $topic->level }}
+            <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold border {{ $module->level === 'B2' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400' }}">
+                {{ $module->level }}
             </span>
         </div>
         @empty
-        <div class="px-5 py-8 text-center text-sm text-slate-600">لا توجد مواضيع بعد</div>
+        <div class="px-5 py-8 text-center text-sm text-slate-600">ما كاينش وحدات. شغّل artisan hoeren:import.</div>
         @endforelse
     </div>
 </div>

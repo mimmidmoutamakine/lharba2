@@ -31,10 +31,13 @@ class User extends Authenticatable
         return $this->hasMany(AccessRequest::class)->latest();
     }
 
+    /** Per-request memoization cache. Cleared between requests automatically. */
+    private array $accessCache = [];
+
     /** Latest approved access — what the user is currently allowed to see. */
     public function currentAccess(): ?AccessRequest
     {
-        return $this->accessRequests()
+        return $this->accessCache['current'] ??= $this->accessRequests()
             ->where('status', AccessRequest::STATUS_APPROVED)
             ->orderByDesc('decided_at')
             ->first();
@@ -43,7 +46,7 @@ class User extends Authenticatable
     /** Latest pending request, if any. */
     public function pendingAccess(): ?AccessRequest
     {
-        return $this->accessRequests()
+        return $this->accessCache['pending'] ??= $this->accessRequests()
             ->where('status', AccessRequest::STATUS_PENDING)
             ->latest()
             ->first();
@@ -62,14 +65,17 @@ class User extends Authenticatable
      */
     public function pendingWelcomeRequest(): ?AccessRequest
     {
+        if (array_key_exists('welcome', $this->accessCache)) {
+            return $this->accessCache['welcome'];
+        }
         try {
-            return $this->accessRequests()
+            return $this->accessCache['welcome'] = $this->accessRequests()
                 ->where('status', AccessRequest::STATUS_APPROVED)
                 ->whereNull('welcomed_at')
                 ->orderByDesc('decided_at')
                 ->first();
         } catch (\Throwable $e) {
-            return null;
+            return $this->accessCache['welcome'] = null;
         }
     }
 

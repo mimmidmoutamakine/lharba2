@@ -29,13 +29,15 @@ class LesenController extends Controller
 
         $approvedLevel = $user->contentLevel(); // null for admins
         $level = $approvedLevel ?: $request->level;
-        $teil  = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : null;
+        // Always require a specific teil. If none specified or invalid, default to
+        // 'teil1' — this prevents the heavy "all teils" view from ever loading by
+        // accident, which was the failure mode on slow networks / overloaded server.
+        // Each page is now guaranteed to render at most ~40 cards (1 per topic).
+        $teil  = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : 'teil1';
 
         // Index only renders metadata + per-teil availability flags.
         // Skip the heavy JSON columns to avoid loading + casting 5 blobs per row.
-        // Paginate to keep mobile DOM small: ~40 cards/page max (8 topics × 5 teils
-        // when no teil filter; 40 topics × 1 teil when filtered).
-        $perPage = $teil ? 40 : 8;
+        $perPage = 40;
         $topics = LesenTopic::where('is_published', true)
             ->when($level, fn ($q) => $q->where('level', $level))
             ->when($teil,  fn ($q) => $q->whereNotNull($teil))

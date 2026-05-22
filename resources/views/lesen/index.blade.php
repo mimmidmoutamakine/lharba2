@@ -54,8 +54,9 @@
 
     {{-- Teil filter --}}
     @php
+        // "الكل" (All) option removed — was the heavy code path that crashed slow
+        // devices on burst load. Default landing now goes to Teil 1 server-side.
         $teilOptions = [
-            null               => ['الكل', 'الكل'],
             'teil1'            => ['T1', 'Teil 1'],
             'teil2'            => ['T2', 'Teil 2'],
             'teil3'            => ['T3', 'Teil 3'],
@@ -80,13 +81,13 @@
                  way to keep iOS Safari from choking on hundreds of cards. --}}
             <div class="min-w-0">
                 <div class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 mb-2" dir="rtl">الجزء (Teil)</div>
-                <div class="grid grid-cols-6 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
+                <div class="grid grid-cols-5 md:flex md:items-center gap-0.5 p-1 rounded-2xl bg-black/30 border border-white/[0.06] shadow-inner shadow-black/30" dir="rtl">
                     @foreach($teilOptions as $val => [$short, $full])
                     @php
-                        $isActive = ($teil ?? '') === ($val ?? '');
+                        $isActive = $teil === $val;
                         $href = route('lesen.index', array_filter([
                             'level' => request('level') ?: null,
-                            'teil'  => $val ?: null,
+                            'teil'  => $val,
                         ]));
                     @endphp
                     <a href="{{ $href }}"
@@ -136,23 +137,12 @@
     </div>
 
     {{-- Topics count (server-side; pagination total) --}}
-    <div class="flex items-center justify-between mb-4 text-xs text-slate-500" dir="rtl">
-        <div class="flex items-center gap-2">
-            <span class="font-bold text-white text-base tabular-nums">{{ $topics->total() }}</span>
-            <span>{{ $teil ? 'تمرين' : 'موضوع' }}</span>
-            @if($teil)
-                <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">{{ $teilOptions[$teil][1] ?? $teil }}</span>
-            @endif
-            @if(request('level'))
-            <span class="px-2 py-0.5 rounded-md font-bold {{ request('level') === 'B2' ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300' : 'bg-amber-500/15 border border-amber-500/30 text-amber-300' }}">{{ request('level') }}</span>
-            @endif
-        </div>
-        @if($teil)
-        <a href="{{ route('lesen.index', array_filter(['level' => request('level') ?: null])) }}"
-           class="text-[11px] text-slate-500 hover:text-white transition-colors flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            مسح الفلاتر
-        </a>
+    <div class="flex items-center gap-2 mb-4 text-xs text-slate-500" dir="rtl">
+        <span class="font-bold text-white text-base tabular-nums">{{ $topics->total() }}</span>
+        <span>تمرين</span>
+        <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">{{ $teilOptions[$teil][1] ?? $teil }}</span>
+        @if(request('level'))
+        <span class="px-2 py-0.5 rounded-md font-bold {{ request('level') === 'B2' ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300' : 'bg-amber-500/15 border border-amber-500/30 text-amber-300' }}">{{ request('level') }}</span>
         @endif
     </div>
 
@@ -171,16 +161,12 @@
             'sprachbausteine1' => 'Sprachbausteine 1',
             'sprachbausteine2' => 'Sprachbausteine 2',
         ];
-        // Render only the teil(s) that match the URL filter. When $teil is set,
-        // each topic emits one card; when not set, each topic emits up to 5 cards.
-        // Combined with server-side pagination, this caps DOM at ~40 cards/page.
-        $teilColsToRender = $teil ? [$teil] : array_keys($teilFullNames);
+        // One card per topic for the active teil. Default-to-teil1 in the controller
+        // guarantees $teil is always set, so DOM caps at ~40 cards (1 per topic).
         $cardItems = [];
         foreach ($topics ?? [] as $t) {
-            foreach ($teilColsToRender as $tk) {
-                if (! $t->{'has_' . $tk}) continue;
-                $cardItems[] = [$t, $tk];
-            }
+            if (! $t->{'has_' . $teil}) continue;
+            $cardItems[] = [$t, $teil];
         }
     @endphp
 
@@ -277,13 +263,13 @@
         @empty
         @endforelse
 
-        {{-- Empty state (server-rendered, no filters matched) --}}
+        {{-- Empty state (server-rendered) --}}
         @if(empty($cardItems))
         <div class="sm:col-span-2 lg:col-span-3 text-center py-12 text-slate-500 text-sm" dir="rtl">
-            <p>لا توجد مواضيع تطابق الفلاتر المختارة.</p>
-            @if($teil || request('level'))
+            <p>ما كاينش تمارين فهاد الجزء حاليا.</p>
+            @if($teil !== 'teil1')
             <a href="{{ route('lesen.index') }}" class="inline-block text-xs mt-2 text-amber-400 hover:text-amber-300 transition-colors">
-                مسح الفلاتر
+                رجع لـ Teil 1
             </a>
             @endif
         </div>

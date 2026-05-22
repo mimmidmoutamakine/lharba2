@@ -31,13 +31,14 @@ class LesenController extends Controller
     {
         if ($redirect = $this->gateOrComingSoon($request)) return $redirect;
 
-        $teil = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : null;
+        // Always require a specific teil. Default to 'teil1' if missing/invalid —
+        // prevents the heavy "all teils" view from loading. Each page caps at ~40
+        // cards (1 per topic), keeping iOS Safari happy under burst load.
+        $teil = in_array($request->teil, self::TEIL_COLUMNS, true) ? $request->teil : 'teil1';
 
         // Index only renders metadata + per-teil availability flags.
         // Skip the heavy JSON columns to avoid loading + casting 5 blobs per row.
-        // Paginate to keep mobile DOM small: ~40 cards/page max (8 topics × 5 teils
-        // when no teil filter; 40 topics × 1 teil when filtered).
-        $perPage = $teil ? 40 : 8;
+        $perPage = 40;
         $topics = GoetheB1LesenTopic::where('is_published', true)
             ->when($teil, fn ($q) => $q->whereNotNull($teil))
             ->select([

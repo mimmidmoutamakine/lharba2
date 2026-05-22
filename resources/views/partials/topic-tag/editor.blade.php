@@ -8,10 +8,14 @@
 @props(['type', 'id', 'currentTag' => null])
 
 <div x-data="{ open: false, sel: @js($currentTag?->tag ?? '') }"
+     x-ref="tagWrap"
      class="relative inline-block" dir="rtl">
 
-    {{-- Trigger button: shows current tag state at a glance --}}
-    <button type="button" @click="open = !open"
+    {{-- Trigger button: shows current tag state at a glance.
+         On open: scroll the trigger into view so the popover has space below it
+         (otherwise rows near the bottom of the page would push the popover off-screen). --}}
+    <button type="button"
+            @click="open = !open; if (open) $nextTick(() => $refs.tagWrap.scrollIntoView({ block: 'center', behavior: 'smooth' }))"
             @class([
                 'inline-flex items-center gap-1 h-7 px-2 rounded-md border text-[10px] font-bold transition-all active:scale-95',
                 'bg-emerald-500/15 border-emerald-400/50 text-emerald-200' => $currentTag?->tag === 'new',
@@ -25,14 +29,17 @@
         <span>{{ $currentTag?->label() ?? 'إشارة' }}</span>
     </button>
 
-    {{-- Popover form --}}
+    {{-- Popover form. Inline max-height + overflow lets the popover internally
+         scroll if the row is near the page bottom (radio options + textarea +
+         buttons can be taller than the remaining viewport space). --}}
     <div x-show="open" x-cloak
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
          @click.outside="open = false"
          @keydown.escape.window="open = false"
-         class="absolute top-full mt-1 right-0 w-72 z-30 bg-[#0B0C10] border border-white/10 rounded-xl shadow-2xl shadow-black/60 overflow-hidden">
+         class="absolute top-full mt-1 right-0 w-72 z-30 bg-[#0B0C10] border border-white/10 rounded-xl shadow-2xl shadow-black/60"
+         style="max-height: min(85vh, 520px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
 
         <form method="POST" action="{{ route('admin.topic-tags.set', ['type' => $type, 'id' => $id]) }}"
               class="p-3 space-y-2.5">

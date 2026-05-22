@@ -7,6 +7,7 @@ use App\Models\LesenTopic;
 use App\Models\HoerenModule;
 use App\Models\HoerenExam;
 use App\Models\GoetheB1LesenTopic;
+use App\Models\SchreibenTopic;
 use App\Models\MundlichB2PlanningStructure;
 use App\Models\MundlichB2PlanningTopic;
 use App\Services\GoetheB1LesenImportService;
@@ -22,6 +23,7 @@ class AdminController extends Controller
         return view('admin.dashboard', [
             'lesenCount'        => LesenTopic::count(),
             'hoerenCount'       => HoerenModule::count(),
+            'schreibenCount'    => SchreibenTopic::count(),
             'goetheB1LesenCount'=> GoetheB1LesenTopic::count(),
             'lesenRecent'       => LesenTopic::latest()->take(5)->get(),
             'hoerenRecent'      => HoerenModule::latest()->take(5)->get(),
@@ -31,7 +33,7 @@ class AdminController extends Controller
     public function goetheB1LesenIndex()
     {
         return view('admin.goethe-b1.lesen.index', [
-            'topics' => GoetheB1LesenTopic::latest()->paginate(20),
+            'topics' => GoetheB1LesenTopic::with('topicTag')->latest()->paginate(20),
         ]);
     }
 
@@ -82,7 +84,7 @@ class AdminController extends Controller
     public function lesenIndex()
     {
         return view('admin.lesen.index', [
-            'topics' => LesenTopic::latest()->paginate(20),
+            'topics' => LesenTopic::with('topicTag')->latest()->paginate(20),
         ]);
     }
 
@@ -98,6 +100,29 @@ class AdminController extends Controller
         return back()->with('success', 'Status updated.');
     }
 
+    // ── Schreiben admin ───────────────────────────────────────────────
+
+    public function schreibenIndex()
+    {
+        return view('admin.schreiben.index', [
+            'topics' => SchreibenTopic::with('topicTag')
+                ->orderBy('level')->orderBy('title')
+                ->paginate(20),
+        ]);
+    }
+
+    public function schreibenDestroy(SchreibenTopic $topic)
+    {
+        $topic->delete();
+        return back()->with('ok', 'Topic deleted.');
+    }
+
+    public function schreibenToggle(SchreibenTopic $topic)
+    {
+        $topic->update(['is_published' => ! $topic->is_published]);
+        return back()->with('ok', 'Status updated.');
+    }
+
     // ── Hören admin ───────────────────────────────────────────────────
 
     public function hoerenIndex()
@@ -107,9 +132,9 @@ class AdminController extends Controller
             ->withCount(['codes', 'exams'])
             ->get();
 
-        // Per-module: exams (with audio status) for the inline upload UI.
+        // Per-module: exams (with audio status + topic tag for inline editor).
         $modules->load(['exams' => function ($q) {
-            $q->orderBy('position');
+            $q->orderBy('position')->with('topicTag');
         }]);
 
         return view('admin.hoeren.index', compact('modules'));
@@ -140,16 +165,23 @@ class AdminController extends Controller
 
     public function hoerenExamAudioUpload(Request $request, HoerenExam $exam)
     {
+        // Use `mimes:` (extension-based, more forgiving) instead of `mimetypes:`
+        // (content-sniffing, varies per server). Cap 30 MB per file.
         $request->validate([
-            // Common audio formats; cap at 25 MB per file.
-            'audio' => 'required|file|mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-m4a,audio/mp4,audio/aac|max:25600',
+            'audio' => 'required|file|mimes:mp3,wav,ogg,m4a,aac,mpeg,mp4|max:30720',
+        ], [
+            'audio.required' => 'اختر ملف الصوت قبل ما تطبع رفع.',
+            'audio.file'     => 'الملف ما تجاش بشكل صحيح. حاول مرة أخرى.',
+            'audio.mimes'    => 'نوع الملف غير مدعوم. الأنواع المسموح بها: MP3, WAV, OGG, M4A, AAC.',
+            'audio.max'      => 'الملف كبير بزاف (الحد الأقصى 30 MB). جرب تصغّر الملف.',
+            'audio.uploaded' => 'الرفع فشل. غالبا الملف كبير من اللي السيرفر مسموح بيه (php.ini → upload_max_filesize).',
         ]);
 
         // Store under storage/app/public/hoeren-audio/{module}/{exam-slug}.{ext}
         // The slug-based filename means re-importing the same exam doesn't break the link.
         $module = $exam->module;
-        $ext  = $request->file('audio')->getClientOriginalExtension() ?: 'mp3';
-        $name = "{$exam->slug}." . strtolower($ext);
+        $ext  = strtolower($request->file('audio')->getClientOriginalExtension() ?: 'mp3');
+        $name = "{$exam->slug}.{$ext}";
         $dir  = "hoeren-audio/{$module->level}-teil{$module->teil}";
         $path = $request->file('audio')->storeAs($dir, $name, 'public');
 

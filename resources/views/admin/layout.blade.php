@@ -37,6 +37,7 @@
                     ['route' => 'admin.users.index',         'icon' => 'users',      'label' => 'المستخدمين'],
                     ['route' => 'admin.lesen.index',         'icon' => 'book',       'label' => 'Lesen (Telc)'],
                     ['route' => 'admin.hoeren.index',        'icon' => 'headphones', 'label' => 'Hören'],
+                    ['route' => 'admin.schreiben.index',      'icon' => 'pencil',     'label' => 'Schreiben'],
                     ['route' => 'admin.goethe-b1.lesen.index','icon' => 'book',      'label' => 'Goethe B1 Lesen'],
                     ['route' => 'admin.mundlich.b2-planning.index','icon' => 'mic',  'label' => 'Telc B2 Mündlich · Planen'],
                     ['route' => 'admin.import.show',         'icon' => 'upload',     'label' => 'استيراد البيانات', 'param' => 'lesen'],
@@ -49,6 +50,7 @@
                     'key'        => '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
                     'users'      => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
                     'mic'        => '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+                    'pencil'     => '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
                 ];
             @endphp
 

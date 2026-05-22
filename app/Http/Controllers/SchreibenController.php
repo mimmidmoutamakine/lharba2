@@ -25,6 +25,7 @@ class SchreibenController extends Controller
         $topics = SchreibenTopic::where('is_published', true)
             ->when($level, fn ($q) => $q->where('level', $level))
             ->when($type, fn ($q) => $q->where('type', $type))
+            ->with('topicTag') // admin-set flags ("جديد", "نادر فاش كيتحط", ...)
             ->orderBy('level')
             ->orderBy('title')
             ->get();

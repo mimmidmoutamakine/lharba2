@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTopicTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 
 class HoerenExam extends Model
 {
+    use HasTopicTag;
+
     protected $fillable = [
         'module_id', 'slug', 'title', 'audio_path', 'position', 'is_published',
     ];

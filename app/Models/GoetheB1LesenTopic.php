@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTopicTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class GoetheB1LesenTopic extends Model
 {
+    use HasTopicTag;
+
     protected $fillable = [
         'title', 'title_ar', 'slug', 'level', 'is_published',
         'teil1', 'teil2', 'teil3', 'teil4', 'teil5',

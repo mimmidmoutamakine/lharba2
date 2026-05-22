@@ -199,9 +199,12 @@
                 </span>
             </div>
 
-            {{-- Exam title --}}
+            {{-- Exam title + admin tag (if any) --}}
             <div class="relative">
-                <h3 class="font-bold text-white text-base leading-snug">{{ $topic->title }}</h3>
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-bold text-white text-base leading-snug">{{ $topic->title }}</h3>
+                    @include('partials.topic-tag.badge', ['tag' => $topic->topicTag])
+                </div>
                 @if($topic->title_ar)
                 <p class="text-xs text-slate-500 mt-0.5" dir="rtl">{{ $topic->title_ar }}</p>
                 @endif

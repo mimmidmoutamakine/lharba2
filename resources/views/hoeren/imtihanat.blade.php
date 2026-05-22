@@ -29,19 +29,24 @@
         <div class="group relative p-3.5 rounded-2xl border bg-[#111216] flex flex-col gap-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:bg-[#13141A]"
              :class="statusBorder('{{ $cardKey }}')"
              dir="ltr">
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
                 <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                     <span>Hören · T{{ $teilNum }}</span>
                 </span>
-                @if($hasAudio)
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 inline-flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    صوت
-                </span>
-                @else
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-700/50 border border-slate-700 text-slate-500">بلا صوت</span>
-                @endif
+                <div class="flex items-center gap-1">
+                    {{-- Admin-set topic tag (نادر / ما بقاش / جديد / ملاحظة) --}}
+                    @include('partials.topic-tag.badge', ['tag' => $exam->topicTag])
+
+                    @if($hasAudio)
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        صوت
+                    </span>
+                    @else
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-700/50 border border-slate-700 text-slate-500">بلا صوت</span>
+                    @endif
+                </div>
             </div>
 
             <h3 class="font-bold text-white text-base leading-snug" dir="auto">{{ $exam->title }}</h3>

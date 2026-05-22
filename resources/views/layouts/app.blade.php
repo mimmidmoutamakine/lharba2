@@ -44,7 +44,11 @@
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
+    {{-- Order matters: "dark light" tells Chrome "this site is primarily dark and
+         handles its own theming — DO NOT apply Force-Dark-on-Web-Contents". This
+         prevents the compounding inversion pass that was killing GPU perf on
+         Android Chrome users with system dark mode on. --}}
+    <meta name="color-scheme" content="dark light">
     <meta name="theme-color" content="#08090C">
     <meta name="application-name" content="{{ config('app.name', 'الهربة') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">

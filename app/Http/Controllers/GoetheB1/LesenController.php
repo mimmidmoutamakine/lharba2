@@ -49,6 +49,7 @@ class LesenController extends Controller
                 DB::raw('(teil4 IS NOT NULL) AS has_teil4'),
                 DB::raw('(teil5 IS NOT NULL) AS has_teil5'),
             ])
+            ->with('topicTag')
             ->orderBy('title')
             ->paginate($perPage)
             ->withQueryString();

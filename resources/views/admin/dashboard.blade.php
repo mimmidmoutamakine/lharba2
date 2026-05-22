@@ -8,9 +8,10 @@
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     @php
         $stats = [
-            ['label' => 'مواضيع Lesen (Telc)', 'value' => $lesenCount,         'color' => 'amber',  'href' => route('admin.lesen.index')],
-            ['label' => 'وحدات Hören',         'value' => $hoerenCount,        'color' => 'orange', 'href' => route('admin.hoeren.index')],
-            ['label' => 'Goethe B1 Lesen',     'value' => $goetheB1LesenCount, 'color' => 'amber',  'href' => route('admin.goethe-b1.lesen.index')],
+            ['label' => 'مواضيع Lesen (Telc)', 'value' => $lesenCount,         'color' => 'amber',   'href' => route('admin.lesen.index')],
+            ['label' => 'وحدات Hören',         'value' => $hoerenCount,        'color' => 'orange',  'href' => route('admin.hoeren.index')],
+            ['label' => 'مواضيع Schreiben',    'value' => $schreibenCount,     'color' => 'emerald', 'href' => route('admin.schreiben.index')],
+            ['label' => 'Goethe B1 Lesen',     'value' => $goetheB1LesenCount, 'color' => 'amber',   'href' => route('admin.goethe-b1.lesen.index')],
         ];
     @endphp
     @foreach($stats as $stat)

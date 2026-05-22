@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\TopicImportController;
 use App\Http\Controllers\Admin\AccessRequestController as AdminAccessRequestController;
+use App\Http\Controllers\Admin\TagController as AdminTagController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoetheB1\LesenController as GoetheB1LesenController;
@@ -45,6 +46,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::patch('/{topic}/toggle', [AdminController::class, 'lesenToggle'])->name('toggle');
     });
 
+    // Schreiben management
+    Route::prefix('schreiben')->name('schreiben.')->group(function () {
+        Route::get('/', [AdminController::class, 'schreibenIndex'])->name('index');
+        Route::delete('/{topic}', [AdminController::class, 'schreibenDestroy'])->name('destroy');
+        Route::patch('/{topic}/toggle', [AdminController::class, 'schreibenToggle'])->name('toggle');
+    });
+
     // Hören management (rebuilt — modules + codes + exams + statements)
     Route::prefix('hoeren')->name('hoeren.')->group(function () {
         Route::get('/',         [AdminController::class, 'hoerenIndex'])->name('index');
@@ -62,6 +70,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/import/preview', [AdminController::class, 'goetheB1LesenImportPreview'])->name('import.preview');
         Route::delete('/{topic}', [AdminController::class, 'goetheB1LesenDestroy'])->name('destroy');
         Route::patch('/{topic}/toggle', [AdminController::class, 'goetheB1LesenToggle'])->name('toggle');
+    });
+
+    // Topic tags — polymorphic flags/notes admin can attach to any topic-like row.
+    // {type} is whitelisted in AdminTagController::TYPE_MAP.
+    Route::prefix('topic-tags/{type}/{id}')->name('topic-tags.')->where(['id' => '[0-9]+'])->group(function () {
+        Route::post('/',   [AdminTagController::class, 'set'])->name('set');
+        Route::delete('/', [AdminTagController::class, 'clear'])->name('clear');
     });
 
     // Telc B2 Mündlich Teil 3 — Gemeinsam etwas planen

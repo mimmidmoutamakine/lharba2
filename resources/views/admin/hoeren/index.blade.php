@@ -57,7 +57,15 @@
             <div class="px-5 py-3 border-b border-white/[0.03] last:border-0 flex flex-wrap items-center gap-3 justify-between"
                  x-data="{ uploadOpen: false }" dir="rtl">
                 <div class="min-w-0 flex-1">
-                    <div class="text-sm text-white truncate" dir="auto">{{ $exam->title }}</div>
+                    <div class="text-sm text-white truncate flex items-center gap-2" dir="auto">
+                        <span class="truncate">{{ $exam->title }}</span>
+                        {{-- Inline admin tag editor — appears on hover/click --}}
+                        @include('partials.topic-tag.editor', [
+                            'type'       => 'hoeren-exam',
+                            'id'         => $exam->id,
+                            'currentTag' => $exam->topicTag,
+                        ])
+                    </div>
                     <div class="text-[11px] text-slate-500 font-mono mt-0.5" dir="ltr">{{ $exam->slug }}</div>
                 </div>
 

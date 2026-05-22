@@ -30,7 +30,14 @@
             @forelse($topics as $topic)
             <tr class="border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors">
                 <td class="px-5 py-3.5">
-                    <div class="font-medium text-white">{{ $topic->title }}</div>
+                    <div class="font-medium text-white flex items-center gap-2 flex-wrap">
+                        <span>{{ $topic->title }}</span>
+                        @include('partials.topic-tag.editor', [
+                            'type'       => 'goethe-b1-lesen',
+                            'id'         => $topic->id,
+                            'currentTag' => $topic->topicTag,
+                        ])
+                    </div>
                     @if($topic->title_ar)
                     <div class="text-xs text-slate-500 mt-0.5">{{ $topic->title_ar }}</div>
                     @endif

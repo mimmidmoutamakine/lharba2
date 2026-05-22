@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTopicTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class LesenTopic extends Model
 {
+    use HasTopicTag;
+
     protected $fillable = [
         'title', 'title_ar', 'slug', 'level', 'category', 'is_published',
         'teil1', 'teil2', 'teil3', 'sprachbausteine1', 'sprachbausteine2',

@@ -49,6 +49,7 @@ class LesenController extends Controller
                 DB::raw('(sprachbausteine1 IS NOT NULL) AS has_sprachbausteine1'),
                 DB::raw('(sprachbausteine2 IS NOT NULL) AS has_sprachbausteine2'),
             ])
+            ->with('topicTag') // admin-set flags ("جديد", "نادر فاش كيتحط", ...)
             ->orderBy('level')
             ->orderBy('title')
             ->paginate($perPage)

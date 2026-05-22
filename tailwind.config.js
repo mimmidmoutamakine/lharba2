@@ -6,6 +6,14 @@ export default {
     './resources/**/*.vue',
     './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
   ],
+  // Topic-tag badges use sky-* classes that aren't referenced elsewhere in the
+  // codebase. Without the safelist they'd be JIT-purged.
+  safelist: [
+    'bg-sky-500/10', 'bg-sky-500/15',
+    'border-sky-400/50', 'border-sky-500/30',
+    'text-sky-300', 'ring-sky-400/60',
+    'accent-sky-500',
+  ],
   darkMode: 'class',
   theme: {
     extend: {

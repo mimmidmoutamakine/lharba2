@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTopicTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class SchreibenTopic extends Model
 {
+    use HasTopicTag;
+
     protected $fillable = [
         'title', 'title_ar', 'slug', 'level', 'type', 'minutes',
         'scenario', 'points', 'is_published',

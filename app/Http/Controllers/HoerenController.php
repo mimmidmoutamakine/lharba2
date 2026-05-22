@@ -58,10 +58,11 @@ class HoerenController extends Controller
         $level   = $this->resolveLevel($request);
 
         $module = HoerenModule::forLevelTeil($level, $teilNum);
-        // Per-exam: count of statements + whether audio exists. No statement bodies loaded.
+        // Per-exam: count of statements + whether audio exists + optional admin tag.
         $exams = $module
             ? $module->exams()
                 ->where('is_published', true)
+                ->with('topicTag')
                 ->withCount('statements')
                 ->orderBy('position')
                 ->paginate(40)

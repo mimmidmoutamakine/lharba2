@@ -235,8 +235,28 @@
 .light-theme .bg-\[\#111216\]\/40 {
     background-color: #ffffff !important;
 }
+/* Used as section bands (e.g. testimonials wrapper). At full dark hex × 30%
+   it renders as solid grey on a white page. Map to a barely-tinted neutral
+   so it reads as a "soft section divider" instead of a grey block. */
+.light-theme .bg-\[\#111216\]\/30,
+.light-theme .bg-\[\#111216\]\/20,
+.light-theme .bg-\[\#111216\]\/10,
+.light-theme .bg-\[\#111216\]\/5 {
+    background-color: rgba(15, 23, 42, 0.025) !important;
+}
 .light-theme .bg-\[\#0a0b0e\] {
     background-color: #fefdf8 !important; /* faintest cream */
+}
+
+/* Hardcoded dark fade gradients on the marquee edges (testimonials section)
+   used `from-[#08090C]` to blend rows into the dark page bg. On a white page
+   those render as dark bands at left/right edges. Override the Tailwind CSS
+   custom-property the JIT class sets so both `bg-gradient-to-r` and
+   `bg-gradient-to-l` inherit the new colour automatically. */
+.light-theme .from-\[\#08090C\] {
+    --tw-gradient-from: #ffffff var(--tw-gradient-from-position, 0%) !important;
+    --tw-gradient-to:   rgb(255 255 255 / 0) var(--tw-gradient-to-position, 100%) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 
 /* Navbar: solid white, very subtle bottom shadow, no blur. */

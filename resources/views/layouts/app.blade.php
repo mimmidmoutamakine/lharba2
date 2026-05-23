@@ -2,15 +2,27 @@
 <html lang="ar" class="scroll-smooth notranslate" translate="no"
     style="--app-font-size-scale: 1; font-size: 100%;">
 <head>
-    {{-- Theme bootstrap — runs BEFORE anything renders to avoid FOUC --}}
+    {{-- Theme bootstrap — runs BEFORE anything renders to avoid FOUC.
+         Default is LIGHT. Only users who explicitly toggled to dark (and so
+         have 'dark' stored in localStorage) see the dark theme. New visitors
+         and anyone with no stored preference get light. --}}
     <script>
         (function () {
             try {
                 var stored = localStorage.getItem('zertify-theme');
-                var isDark = stored !== 'light';
+                var isDark = stored === 'dark';
                 var html   = document.documentElement;
                 if (isDark) { html.classList.add('dark'); html.classList.remove('light-theme'); }
                 else        { html.classList.add('light-theme'); html.classList.remove('dark'); }
+
+                // Keep <meta name="theme-color"> in sync so the mobile browser
+                // chrome (URL bar tint) matches the active theme — both at
+                // initial load and after every toggle.
+                function _syncThemeColor(dark) {
+                    var meta = document.querySelector('meta[name="theme-color"]');
+                    if (meta) meta.setAttribute('content', dark ? '#08090C' : '#ffffff');
+                }
+                _syncThemeColor(isDark);
 
                 window.toggleTheme = function () {
                     var nowLight = !html.classList.contains('light-theme');
@@ -21,10 +33,12 @@
                         html.classList.add('light-theme');
                         html.classList.remove('dark');
                         localStorage.setItem('zertify-theme', 'light');
+                        _syncThemeColor(false);
                     } else {
                         html.classList.remove('light-theme');
                         html.classList.add('dark');
                         localStorage.setItem('zertify-theme', 'dark');
+                        _syncThemeColor(true);
                     }
                     // Force a reflow so the no-transition rule is committed BEFORE we re-enable.
                     void html.offsetHeight;
@@ -44,12 +58,14 @@
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{-- Order matters: "dark light" tells Chrome "this site is primarily dark and
-         handles its own theming — DO NOT apply Force-Dark-on-Web-Contents". This
-         prevents the compounding inversion pass that was killing GPU perf on
-         Android Chrome users with system dark mode on. --}}
-    <meta name="color-scheme" content="dark light">
-    <meta name="theme-color" content="#08090C">
+    {{-- Now that the default theme is light, list "light" first. Chrome reads
+         the first value as the page's preferred scheme — this also tells Chrome
+         not to apply its auto-dark inversion on light-default pages. --}}
+    <meta name="color-scheme" content="light dark">
+    {{-- Browser chrome (mobile URL bar / address bar) matches the active theme.
+         The default below is white (light theme); the toggle script updates this
+         tag dynamically when the user switches. --}}
+    <meta name="theme-color" content="#ffffff">
     <meta name="application-name" content="{{ config('app.name', 'الهربة') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 

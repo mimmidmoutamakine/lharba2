@@ -5,52 +5,102 @@
 
 @section('content')
 
-{{-- ═══ HERO ═══ --}}
-<section class="max-w-7xl mx-auto px-6 mb-0 pt-32" aria-label="Introduction">
-    <div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+{{-- ═══ HERO — NINJA ═══ --}}
+<section class="relative overflow-hidden pt-28 md:pt-32 pb-12" aria-label="Introduction">
 
-        {{-- ── HIDDEN — waiting for new copy ──────────────────────────────────
-            Badge + Headline + Subtitle were here. Drop the new text in this
-            block when ready, then remove the @if(false) wrapper.
-        --}}
-        @if(false)
-        {{-- Badge --}}
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase mb-8 bg-amber-500/10 border-amber-500/20 text-amber-400" dir="rtl">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span>جديد: وجد لـ TELC B1 &amp; B2 و نتا هاني</span>
+    {{-- hero-local glow behind the ninja --}}
+    <div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] max-w-full blur-[140px] rounded-full bg-amber-500/15 pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-10 lg:gap-6 items-center">
+
+        {{-- ── Text column (right in RTL) ── --}}
+        <div class="text-center lg:text-right order-2 lg:order-1" dir="rtl">
+
+            {{-- Badge --}}
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase mb-6 bg-amber-500/10 border-amber-500/20 text-amber-400">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span>Telc B1 &amp; B2 · تحضير د النينجا</span>
+            </div>
+
+            {{-- Headline --}}
+            <h1 class="text-5xl sm:text-6xl md:text-7xl font-black mb-6 leading-[1.1] text-white">
+                <span class="text-transparent bg-clip-text bg-gradient-to-l from-amber-400 via-orange-400 to-white">معاك تاتهرب</span><span class="text-amber-400">...</span>
+            </h1>
+
+            {{-- Subtitle --}}
+            <p class="text-lg md:text-xl mb-8 max-w-xl mx-auto lg:mr-0 leading-relaxed text-slate-400">
+                الموقع اللي معتامدين عليه كافة التلاميذ للتحضير لامتحان <strong class="text-slate-200">Telc</strong>، بعيداً على روينة ديال الـ PDFs و الدوخة بين الخبارات من كل جهة.
+            </p>
+
+            {{-- Feature bullets --}}
+            <ul class="space-y-3 mb-9 max-w-md mx-auto lg:mr-0 text-right">
+                @foreach([
+                    'تنظيم بسيط',
+                    'تصحيح فوري',
+                    'تصحيح ونماذج شخايبن',
+                    'أسرع طرق تحضير شبخيشن',
+                    'أكواد الهورن',
+                ] as $point)
+                <li class="flex items-center gap-3 text-slate-200">
+                    <span class="shrink-0 w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+                        <svg width="13" height="13" viewBox="0 0 100 100" fill="currentColor" class="text-amber-400" aria-hidden="true"><path d="M50 4 L57 38 L93 32 L66 56 L96 78 L60 70 L50 96 L40 70 L4 78 L34 56 L7 32 L43 38 Z"/><circle cx="50" cy="56" r="6" fill="#08090C"/></svg>
+                    </span>
+                    <span class="text-base md:text-lg font-medium">{{ $point }}</span>
+                </li>
+                @endforeach
+            </ul>
+
+            {{-- CTA --}}
+            <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center lg:justify-start justify-center gap-3">
+                {{-- Primary: start free --}}
+                <a href="{{ route('lesen.index') }}"
+                   class="btn-shine group w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-base md:text-lg transition-all flex items-center justify-center cursor-pointer bg-white text-black hover:bg-slate-200 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
+                    <span>ابدأ مجاناً</span>
+                    <span class="inline-block transition-transform group-hover:-translate-x-1 mr-2">←</span>
+                </a>
+                {{-- Secondary: discover features (scrolls down) --}}
+                <a href="#features-lesen"
+                   class="group w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-base md:text-lg transition-all flex items-center justify-center gap-2 border border-white/15 text-white hover:bg-white/5 hover:border-white/30">
+                    <span>إكتشف المميزات</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="transition-transform group-hover:translate-y-0.5"><path d="m6 9 6 6 6-6"/></svg>
+                </a>
+                {{-- WhatsApp --}}
+                <a href="https://wa.me/212720061881" target="_blank" rel="noopener noreferrer"
+                   class="group w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-base md:text-lg transition-all flex items-center justify-center gap-2 bg-[#25D366] text-black hover:bg-[#1ebe5b] shadow-[0_0_40px_-12px_rgba(37,211,102,0.6)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 group-hover:scale-110 transition-transform"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/></svg>
+                    <span>واتساب</span>
+                </a>
+            </div>
         </div>
 
-        {{-- Headline --}}
-        <h1 class="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight text-white" dir="rtl">
-            نسا تمارة د الـ PDFs.. <br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-white">
-                ضمن نجاحك فـ Telc بذكاء!
-            </span>
-        </h1>
+        {{-- ── Ninja column (left in RTL) ── --}}
+        <div class="relative order-1 lg:order-2 flex justify-center">
+            {{-- decorative spinning shurikens flanking the ninja --}}
+            <img src="{{ asset('images/shuriken.png') }}" alt="" aria-hidden="true"
+                 class="shuriken-spin absolute top-4 right-2 md:right-6 w-9 sm:w-14 md:w-20 opacity-30 drop-shadow-[0_0_12px_rgba(245,158,11,0.25)]" loading="lazy">
+            <img src="{{ asset('images/shuriken.png') }}" alt="" aria-hidden="true"
+                 class="shuriken-spin shuriken-spin--rev absolute bottom-8 left-0 md:left-4 w-7 sm:w-10 md:w-14 opacity-20" loading="lazy">
 
-        {{-- Subtitle --}}
-        <p class="text-lg md:text-xl mb-10 max-w-2xl leading-relaxed text-slate-400" dir="rtl">
-            المنصة رقم 1 لي فيها كاع الـ <strong>Themen</strong> بالتعديلات ديالهم كاملين لـ <strong>Telc B1 &amp; B2</strong>.
-            من جميع المواضيع د Lesen لجميع الـ <strong>Hören</strong> المسرب القديم و حتى ديال تركيا،
-            وصولاً للتصحيح بالذكاء الاصطناعي فـ Schreiben. راجع بطريقة منظمة، ربح الوقت، و جيبها من الدقة اللولة!
-        </p>
-        @endif
+            {{-- group + ninja-col: hover (desktop) or tap (touch) makes the ninja "imagine" الهربة --}}
+            <div class="ninja-hero-float ninja-col group relative cursor-pointer"
+                 role="button" tabindex="0" aria-label="ما كيحلم بيه النينجا">
 
-        {{-- CTAs --}}
-        <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto" dir="rtl">
-            {{-- Start Free CTA — only CTA on the hero, no more WhatsApp / Explore distractions --}}
-            <a href="{{ route('lesen.index') }}"
-               class="btn-shine group w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center cursor-pointer bg-white text-black hover:bg-slate-200 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
-                <span>ابدأ مجاناً</span>
-                <span class="inline-block transition-transform group-hover:-translate-x-1 mr-2">←</span>
-            </a>
-        </div>
+                {{-- ── Thought bubble ── --}}
+                {{-- trailing puffs leading up from the ninja's head toward the cloud --}}
+                <span class="think think-puff--1 absolute top-10 right-14 sm:top-12 sm:right-24 z-30 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-lg pointer-events-none"></span>
+                <span class="think think-puff--2 absolute top-5 right-10 sm:top-6 sm:right-20 z-30 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white shadow-lg pointer-events-none"></span>
+                <span class="think think-puff--3 absolute top-1 right-7 sm:top-0 sm:right-16 z-30 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-white shadow-lg pointer-events-none"></span>
+                {{-- the cloud --}}
+                <div class="think think-cloud absolute -top-5 right-2 md:right-0 z-30 pointer-events-none">
+                    <div class="relative px-4 py-2 md:px-8 md:py-4 rounded-[2.5rem] bg-white shadow-[0_12px_45px_-8px_rgba(0,0,0,0.55)] ring-1 ring-amber-500/20">
+                        <span class="block text-lg sm:text-2xl md:text-4xl font-black leading-none text-transparent bg-clip-text bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600" dir="rtl">الهربة</span>
+                    </div>
+                </div>
 
-        {{-- Trust Badge --}}
-        <div class="mt-12 pt-8 border-t w-full max-w-2xl border-white/[0.08]">
-            <p class="text-xs uppercase mb-4 font-semibold text-slate-500">موثوق به من قبل الطلاب الذين يستعدون لـ</p>
-            <div class="flex flex-wrap justify-center items-center gap-6 md:gap-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                <span class="text-lg md:text-xl font-bold tracking-widest text-white">TELC</span>
+                <img src="{{ asset('images/ninja-hero.png') }}"
+                     alt="نينجا الهربة — تحضير امتحان telc"
+                     class="ninja-hero-img relative z-10 w-40 sm:w-64 md:w-[360px] lg:w-[420px] h-auto"
+                     loading="eager" fetchpriority="high">
             </div>
         </div>
     </div>
@@ -483,6 +533,107 @@
 
 @push('scripts')
 <script>
+    // Custom ninja cursor — amber dot + comet tail + a few lagging spinning shurikens.
+    // Desktop (fine pointer) only, skipped under reduced-motion; never blocks clicks/typing.
+    (function () {
+        const fine   = window.matchMedia('(pointer: fine)').matches;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!fine || reduce) return;
+
+        const root = document.documentElement;
+        root.classList.add('ninja-cursor-on');
+
+        const SHURIKEN_SVG = '<svg width="100%" height="100%" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path d="M50 4 L57 38 L93 32 L66 56 L96 78 L60 70 L50 96 L40 70 L4 78 L34 56 L7 32 L43 38 Z"/><circle cx="50" cy="56" r="6" fill="#08090C"/></svg>';
+
+        const make = (cls, css = '') => {
+            const n = document.createElement('div');
+            n.className = 'cursor-fx ' + cls;
+            if (css) n.style.cssText += css;
+            document.body.appendChild(n);
+            return n;
+        };
+
+        const dot = make('cursor-dot');
+
+        // Comet tail: chain of shrinking, fading dots that lerp toward the one ahead.
+        const TRAIL = 9;
+        const trail = [];
+        for (let i = 0; i < TRAIL; i++) {
+            const t = (i + 1) / TRAIL;            // 0→1 along the tail
+            const size = Math.round(8 * (1 - t) + 2);
+            trail.push(make('cursor-trail', `width:${size}px;height:${size}px;opacity:${(0.5 * (1 - t)).toFixed(2)};`));
+        }
+
+        // A few floating shurikens that lag further behind and spin.
+        const SHUR = 3;
+        const shus = [];
+        for (let i = 0; i < SHUR; i++) {
+            const size = 22 - i * 4;
+            const n = make('cursor-shuriken', `width:${size}px;height:${size}px;opacity:${(0.6 - i * 0.15).toFixed(2)};`);
+            const inner = document.createElement('div');
+            inner.className = 'shuriken-spin' + (i % 2 ? ' shuriken-spin--rev' : '');
+            inner.style.cssText = 'width:100%;height:100%;';
+            inner.innerHTML = SHURIKEN_SVG;
+            n.appendChild(inner);
+            shus.push(n);
+        }
+
+        let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+        const tp = trail.map(() => ({ x: mx, y: my }));
+        const sp = shus.map(() => ({ x: mx, y: my }));
+
+        const setPos = (node, x, y) => { node.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`; };
+
+        window.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; }, { passive: true });
+
+        let px, py;
+        function loop() {
+            setPos(dot, mx, my);
+            // comet tail
+            px = mx; py = my;
+            for (let i = 0; i < trail.length; i++) {
+                const p = tp[i];
+                p.x += (px - p.x) * 0.34; p.y += (py - p.y) * 0.34;
+                setPos(trail[i], p.x, p.y);
+                px = p.x; py = p.y;
+            }
+            // lagging shurikens
+            px = mx; py = my;
+            for (let i = 0; i < shus.length; i++) {
+                const p = sp[i], ease = 0.09 - i * 0.022;
+                p.x += (px - p.x) * ease; p.y += (py - p.y) * ease;
+                setPos(shus[i], p.x, p.y);
+                px = p.x; py = p.y;
+            }
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+        // Grow the dot over anything clickable / typable.
+        const INTERACTIVE = 'a, button, input, textarea, select, label, summary, [role="button"], [onclick], .cursor-pointer';
+        document.addEventListener('mouseover', (e) => { if (e.target.closest(INTERACTIVE)) dot.classList.add('is-active'); });
+        document.addEventListener('mouseout',  (e) => { if (e.target.closest(INTERACTIVE)) dot.classList.remove('is-active'); });
+
+        // Fade the whole rig out when the pointer leaves the window.
+        document.addEventListener('mouseleave', () => root.classList.add('cursor-gone'));
+        document.addEventListener('mouseenter', () => root.classList.remove('cursor-gone'));
+    })();
+
+    // Thought-bubble: hover handles desktop via CSS. On touch (no hover), tap the
+    // ninja to toggle الهربة; tapping elsewhere dismisses it. Also fires on keyboard focus.
+    (function () {
+        const col = document.querySelector('.ninja-col');
+        if (!col) return;
+        col.addEventListener('click', (e) => {
+            e.stopPropagation();
+            col.classList.toggle('is-imagining');
+        });
+        col.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); col.classList.toggle('is-imagining'); }
+        });
+        document.addEventListener('click', () => col.classList.remove('is-imagining'));
+    })();
+
     // Pause the testimonials marquee when it's offscreen — saves continuous CPU/GPU
     // on a heavy homepage. Also pause when the tab is hidden.
     (function () {

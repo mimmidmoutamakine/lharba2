@@ -538,3 +538,80 @@ input:-webkit-autofill:active {
 /* Misc */
 .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
 body { font-family: 'Cairo', sans-serif; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   NINJA HERO — entrance, float, spinning shuriken, hover thought-bubble
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Ninja photo: entrance on the <img>, gentle float on the wrapper so the
+   two transforms never fight each other. */
+@keyframes ninja-enter {
+    0%   { opacity: 0; transform: translateY(48px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@keyframes ninja-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-16px); }
+}
+.ninja-hero-float { animation: ninja-float 7s ease-in-out infinite; }
+.ninja-hero-img   {
+    animation: ninja-enter 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    /* Fade the bottom crop edge into the page so there's no hard cut line */
+    -webkit-mask-image: linear-gradient(to bottom, #000 72%, rgba(0,0,0,0.35) 88%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 72%, rgba(0,0,0,0.35) 88%, transparent 100%);
+}
+
+/* Spinning metal shuriken (uses the photo PNG) */
+@keyframes shuriken-spin { to { transform: rotate(360deg); } }
+.shuriken-spin { animation: shuriken-spin 5s linear infinite; will-change: transform; }
+.shuriken-spin--rev { animation-direction: reverse; }
+
+/* Hover thought-bubble — the ninja "imagines" الهربة when you hover the photo.
+   Each piece (the 3 trailing puffs + the cloud) pops in with its own delay
+   for a little think-bubble cascade. Driven by .group:hover on the column. */
+.think                { opacity: 0; transform: scale(0.4); transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: bottom right; }
+.group:hover .think,
+.ninja-col.is-imagining .think { opacity: 1; transform: scale(1); }
+.think-puff--1 { transition-delay: 0.00s; }
+.think-puff--2 { transition-delay: 0.08s; }
+.think-puff--3 { transition-delay: 0.16s; }
+.think-cloud   { transition-delay: 0.24s; }
+.group:hover .think-cloud,
+.ninja-col.is-imagining .think-cloud { animation: think-bob 3s ease-in-out 0.7s infinite; }
+@keyframes think-bob {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50%      { transform: scale(1) translateY(-6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ninja-hero-float, .ninja-hero-img, .shuriken-spin { animation: none !important; }
+    .think { transition: none !important; }
+    .group:hover .think-cloud, .ninja-col.is-imagining .think-cloud { animation: none !important; }
+}
+
+/* ── Custom ninja cursor: dot + comet tail + lagging shurikens (desktop only) ── */
+.ninja-cursor-on,
+.ninja-cursor-on * { cursor: none !important; }
+.ninja-cursor-on.cursor-gone .cursor-fx { opacity: 0 !important; }
+
+.cursor-fx {
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9999;
+    transition: opacity 0.25s ease;
+    will-change: transform;
+}
+.cursor-dot {
+    width: 10px; height: 10px; border-radius: 9999px;
+    background: #f59e0b;
+    box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.6);
+    transition: width 0.18s ease, height 0.18s ease, background 0.18s ease, opacity 0.25s ease;
+}
+.cursor-dot.is-active {
+    width: 22px; height: 22px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 16px 3px rgba(245, 158, 11, 0.5);
+}
+.cursor-trail { border-radius: 9999px; background: #f59e0b; }
+.cursor-shuriken { color: rgba(245, 158, 11, 0.55); }
+.cursor-shuriken svg { display: block; }
+.light-theme .cursor-shuriken { color: rgba(217, 119, 6, 0.5); }

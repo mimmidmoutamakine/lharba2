@@ -32,6 +32,9 @@ use Illuminate\Support\Str;
  */
 class HoerenImportService
 {
+    /** File-level provenance flag (standard vs Türkei); fallback when an entry omits it. */
+    private ?string $fileUpdateCategory = null;
+
     /**
      * @return array{
      *   modules: int, codes: int, exams: int, statements: int,
@@ -49,6 +52,11 @@ class HoerenImportService
         if (! is_array($entries)) {
             return $this->emptyResult(['Expected top-level "entries" array, got ' . gettype($entries)]);
         }
+
+        // The exporter stamps the whole file with a provenance flag (standard vs
+        // Türkei). Entries may also carry their own; entry wins, file is the fallback.
+        $this->fileUpdateCategory = is_string($data['update_category'] ?? null)
+            ? $data['update_category'] : null;
 
         // Group source entries by (level, teil) so we can merge codes + situations
         // into a single module.
@@ -133,7 +141,10 @@ class HoerenImportService
             $questions = is_array($entry['questions'] ?? null) ? $entry['questions'] : [];
 
             if ($category === 'situations') {
-                $examPos = $this->importSituations($module, $questions, $examPos, $existingAudio, $seenExamSlugs, $counts);
+                // Provenance flag for the exams from this entry (entry wins, file is fallback).
+                $updateCategory = (is_string($entry['update_category'] ?? null) ? $entry['update_category'] : null)
+                    ?? $this->fileUpdateCategory;
+                $examPos = $this->importSituations($module, $questions, $examPos, $existingAudio, $seenExamSlugs, $updateCategory, $counts);
             } else {
                 // 'codes' or null → both look like code-questions in the source data.
                 $codePos = $this->importCodes($module, $questions, $codePos, $counts);
@@ -182,6 +193,7 @@ class HoerenImportService
         int $startPos,
         array $existingAudio,
         array &$seenExamSlugs,
+        ?string $updateCategory,
         array &$counts
     ): int {
         // Group statements by groupTitle.
@@ -209,12 +221,13 @@ class HoerenImportService
             $seenExamSlugs[$slug] = true;
 
             $exam = HoerenExam::create([
-                'module_id'    => $module->id,
-                'slug'         => $slug,
-                'title'        => $title,
-                'audio_path'   => $existingAudio[$slug] ?? null, // preserve uploaded audio
-                'position'     => $pos++,
-                'is_published' => true,
+                'module_id'       => $module->id,
+                'slug'            => $slug,
+                'title'           => $title,
+                'update_category' => $updateCategory,
+                'audio_path'      => $existingAudio[$slug] ?? null, // preserve uploaded audio
+                'position'        => $pos++,
+                'is_published'    => true,
             ]);
             $counts['exams']++;
 

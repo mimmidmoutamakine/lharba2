@@ -40,6 +40,7 @@
                     ['route' => 'admin.schreiben.index',      'icon' => 'pencil',     'label' => 'Schreiben'],
                     ['route' => 'admin.goethe-b1.lesen.index','icon' => 'book',      'label' => 'Goethe B1 Lesen'],
                     ['route' => 'admin.mundlich.b2-planning.index','icon' => 'mic',  'label' => 'Telc B2 Mündlich · Planen'],
+                    ['route' => 'admin.mundlich.b2-sprechen.index','icon' => 'mic',  'label' => 'Telc B2 Mündlich · Teil 2'],
                     ['route' => 'admin.import.show',         'icon' => 'upload',     'label' => 'استيراد البيانات', 'param' => 'lesen'],
                 ];
                 $icons = [

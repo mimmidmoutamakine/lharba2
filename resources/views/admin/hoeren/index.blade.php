@@ -59,6 +59,15 @@
                 <div class="min-w-0 flex-1">
                     <div class="text-sm text-white truncate flex items-center gap-2" dir="auto">
                         <span class="truncate">{{ $exam->title }}</span>
+                        @php $catLabel = $exam->categoryLabel(); @endphp
+                        @if($catLabel)
+                        <span @class([
+                                'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold border',
+                                'bg-rose-500/15 border-rose-500/30 text-rose-300'    => $exam->categoryGroup() === 'turkey',
+                                'bg-slate-600/30 border-slate-600/50 text-slate-300' => $exam->categoryGroup() !== 'turkey',
+                              ])
+                              title="مصدر: {{ $exam->update_category }}">{{ $catLabel }}</span>
+                        @endif
                         {{-- Inline admin tag editor — appears on hover/click --}}
                         @include('partials.topic-tag.editor', [
                             'type'       => 'hoeren-exam',

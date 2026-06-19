@@ -153,11 +153,27 @@
                    class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap {{ request()->routeIs('schreiben*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
                     Schreiben
                 </a>
-                <a href="{{ route('mundlich.b2-planning.index') }}"
-                   class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap inline-flex items-center gap-1.5 {{ request()->routeIs('mundlich*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
-                    Mündlich
-                    <span class="text-[9px] font-bold uppercase tracking-wider px-1 rounded bg-amber-500/20 text-amber-300">جديد</span>
-                </a>
+                <div class="relative" x-data="{ mOpen: false }" @mouseenter="mOpen = true" @mouseleave="mOpen = false">
+                    <button type="button" @click="mOpen = !mOpen"
+                       class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap inline-flex items-center gap-1.5 {{ request()->routeIs('mundlich*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
+                        Mündlich
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-1 rounded bg-amber-500/20 text-amber-300">جديد</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" :class="mOpen && 'rotate-180'" class="transition-transform"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="mOpen" x-cloak x-transition
+                         class="absolute top-full right-0 mt-1 min-w-[230px] bg-[#0B0C10] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 p-1.5 z-50" dir="rtl">
+                        <a href="{{ route('mundlich.b2-sprechen.index') }}"
+                           class="block px-3 py-2 rounded-lg text-sm transition-colors {{ request()->routeIs('mundlich.b2-sprechen.*') ? 'bg-amber-500/15 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
+                            <div class="font-bold">Mündlich · Teil 2</div>
+                            <div class="text-[11px] text-slate-500">Präsentation — 3 طبقات</div>
+                        </a>
+                        <a href="{{ route('mundlich.b2-planning.index') }}"
+                           class="block px-3 py-2 rounded-lg text-sm transition-colors {{ request()->routeIs('mundlich.b2-planning.*') ? 'bg-amber-500/15 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5' }}">
+                            <div class="font-bold">Mündlich · Teil 3</div>
+                            <div class="text-[11px] text-slate-500">Gemeinsam etwas planen</div>
+                        </a>
+                    </div>
+                </div>
                 <a href="{{ route('simulation.index') }}"
                    class="px-4 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap {{ request()->routeIs('simulation*') ? 'bg-white/10 text-white shadow-sm border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent' }}">
                     اختبر نفسك
@@ -243,9 +259,12 @@
             <a href="{{ route('lesen.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Lesen</a>
             <a href="{{ route('hoeren.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Hören</a>
             <a href="{{ route('schreiben.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Schreiben</a>
-            <a href="{{ route('mundlich.b2-planning.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between">
-                <span>Mündlich</span>
+            <a href="{{ route('mundlich.b2-sprechen.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between">
+                <span>Mündlich · Teil 2</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">جديد</span>
+            </a>
+            <a href="{{ route('mundlich.b2-planning.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+                <span>Mündlich · Teil 3</span>
             </a>
             <a href="{{ route('simulation.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">اختبر نفسك</a>
             <a href="{{ route('plan') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">خطتي</a>

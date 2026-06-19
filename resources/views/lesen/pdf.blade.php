@@ -228,8 +228,13 @@
 
 <div class="header">
     <span class="level {{ $topic->level === 'B2' ? 'b2' : '' }}">{{ $topic->level }}</span>
-    <div class="module">Lesen · {{ $teilLabel }}</div>
-    <h1>{{ $topic->title }}@if($topic->title_ar) <span class="arabic">— {{ $topic->title_ar }}</span>@endif</h1>
+    @php
+        // individualTitle (per-Teil heading) is the main title; examTitle shown after a ·.
+        $pdfIndividual = is_array($content) ? ($content['individualTitle'] ?? null) : null;
+        $pdfHeading    = $pdfIndividual ?: $topic->title;
+    @endphp
+    <div class="module">Lesen · {{ $teilLabel }}@if($pdfIndividual && $pdfIndividual !== $topic->title) · {{ $topic->title }}@endif</div>
+    <h1>{{ $pdfHeading }}@if($topic->title_ar) <span class="arabic">— {{ $topic->title_ar }}</span>@endif</h1>
 </div>
 
 @if($teil === 'teil1')

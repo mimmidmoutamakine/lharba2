@@ -58,10 +58,30 @@ class HoerenController extends Controller
         $level   = $this->resolveLevel($request);
 
         $module = HoerenModule::forLevelTeil($level, $teilNum);
+
+        // Provenance filter (standard / Türkei). Which groups actually exist in this
+        // module decides whether the filter UI shows at all. Order: standard, turkey, other.
+        $availableCats = [];
+        if ($module) {
+            $present = $module->exams()->where('is_published', true)
+                ->pluck('update_category')
+                ->map(fn ($c) => HoerenExam::groupFor($c))
+                ->filter()
+                ->unique()
+                ->all();
+            $availableCats = array_values(array_filter(
+                HoerenExam::CATEGORY_GROUPS,
+                fn ($g) => in_array($g, $present, true)
+            ));
+        }
+        $activeCat = in_array($request->query('cat'), $availableCats, true)
+            ? $request->query('cat') : null;
+
         // Per-exam: count of statements + whether audio exists + optional admin tag.
         $exams = $module
             ? $module->exams()
                 ->where('is_published', true)
+                ->when($activeCat, fn ($q) => $q->inCategoryGroup($activeCat))
                 ->with('topicTag')
                 ->withCount('statements')
                 ->orderBy('position')
@@ -70,12 +90,14 @@ class HoerenController extends Controller
             : collect();
 
         return view('hoeren.imtihanat', [
-            'teilKey'   => $teil,
-            'teilNum'   => $teilNum,
-            'level'     => $level,
-            'module'    => $module,
-            'exams'     => $exams,
-            'section'   => 'imtihanat',
+            'teilKey'       => $teil,
+            'teilNum'       => $teilNum,
+            'level'         => $level,
+            'module'        => $module,
+            'exams'         => $exams,
+            'availableCats' => $availableCats,
+            'activeCat'     => $activeCat,
+            'section'       => 'imtihanat',
         ]);
     }
 

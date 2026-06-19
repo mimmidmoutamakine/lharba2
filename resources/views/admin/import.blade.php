@@ -203,7 +203,10 @@
                 </div>
                 <template x-for="(t, i) in previewData" :key="i">
                     <div class="mb-2 p-2 rounded-lg bg-white/[0.03] text-slate-400">
-                        <span class="text-amber-400 font-bold" x-text="t.title"></span>
+                        <template x-if="t.individual_title">
+                            <span class="text-white font-bold mr-1" x-text="t.individual_title"></span>
+                        </template>
+                        <span class="text-amber-400 font-bold" :class="t.individual_title ? 'text-[10px] opacity-70' : ''" x-text="t.individual_title ? '· ' + t.title : t.title"></span>
                         <span class="text-slate-600 ml-2" x-text="'[' + (t.level || 'B1') + ']'"></span>
                         <template x-if="t.has_content">
                             <span class="text-green-500/70 ml-2 text-[10px]">✓ content</span>
@@ -338,6 +341,7 @@ function importPage() {
     {
       "examId": "exam-167799",
       "examTitle": "Alex und Cora",
+      "individualTitle": "Headline-Text",
       "arabic_title": "",
       "level": "B1",
       "visibility": "public",
@@ -365,6 +369,7 @@ function importPage() {
     {
       "examId": "exam-167799",
       "examTitle": "Alex und Cora",
+      "individualTitle": "Haustiere in Deutschland",
       "arabic_title": "",
       "level": "B1",
       "visibility": "public",
@@ -397,6 +402,7 @@ function importPage() {
     {
       "examId": "exam-728871",
       "examTitle": "Auf dem weg",
+      "individualTitle": "Musikinstrumente",
       "arabic_title": "في الطريق",
       "level": "B2",
       "visibility": "public",
@@ -553,6 +559,7 @@ function importPage() {
                 entries: [{
                     examId: 'exam-sample',
                     examTitle: 'Beispiel-Thema',
+                    individualTitle: 'Titre individuel de ce Teil',
                     arabic_title: 'موضوع تجريبي',
                     level: 'B1',
                     visibility: 'public',

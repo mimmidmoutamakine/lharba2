@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoetheB1\LesenController as GoetheB1LesenController;
 use App\Http\Controllers\Mundlich\B2PlanningController as MundlichB2PlanningController;
+use App\Http\Controllers\Mundlich\B2SprechenController as MundlichB2SprechenController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -87,6 +88,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/import/preview', [AdminController::class, 'mundlichB2PlanningImportPreview'])->name('import.preview');
         Route::delete('/{topic}', [AdminController::class, 'mundlichB2PlanningDestroy'])->name('destroy');
         Route::patch('/{topic}/toggle', [AdminController::class, 'mundlichB2PlanningToggle'])->name('toggle');
+    });
+
+    // Telc B2 Sprechen Teil 2 — Präsentation (3-layer Baukasten)
+    Route::prefix('mundlich/b2-sprechen')->name('mundlich.b2-sprechen.')->group(function () {
+        Route::get('/', [AdminController::class, 'mundlichB2SprechenIndex'])->name('index');
+        Route::get('/import', [AdminController::class, 'mundlichB2SprechenImportShow'])->name('import.show');
+        Route::post('/import', [AdminController::class, 'mundlichB2SprechenImportHandle'])->name('import.handle');
+        Route::post('/import/preview', [AdminController::class, 'mundlichB2SprechenImportPreview'])->name('import.preview');
+        Route::delete('/topics/{topic}', [AdminController::class, 'mundlichB2SprechenTopicDestroy'])->name('topic.destroy');
+        Route::patch('/topics/{topic}/toggle', [AdminController::class, 'mundlichB2SprechenTopicToggle'])->name('topic.toggle');
+        Route::patch('/clusters/{cluster}/toggle', [AdminController::class, 'mundlichB2SprechenClusterToggle'])->name('cluster.toggle');
     });
 
     // Import (lesen or hoeren)
@@ -175,6 +187,15 @@ Route::middleware(['auth', 'has.access'])->group(function () {
         Route::get('/',            [MundlichB2PlanningController::class, 'index'])->name('index');
         Route::get('/strukturen',  [MundlichB2PlanningController::class, 'structures'])->name('structures');
         Route::get('/{slug}',      [MundlichB2PlanningController::class, 'topic'])->name('topic');
+    });
+
+    // Telc B2 Mündlich Teil 2 — Präsentation (3-layer Baukasten)
+    // /universal is declared before /{slug} so it isn't shadowed. Clusters are a
+    // filter on the index (?cluster=key), not a standalone route.
+    Route::prefix('mundlich/b2-sprechen')->name('mundlich.b2-sprechen.')->group(function () {
+        Route::get('/',           [MundlichB2SprechenController::class, 'index'])->name('index');
+        Route::get('/universal',  [MundlichB2SprechenController::class, 'universal'])->name('universal');
+        Route::get('/{slug}',     [MundlichB2SprechenController::class, 'topic'])->name('topic');
     });
 
     Route::get('/plan',     [PlanController::class, 'index'])->name('plan');

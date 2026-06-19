@@ -10,9 +10,13 @@ use App\Models\GoetheB1LesenTopic;
 use App\Models\SchreibenTopic;
 use App\Models\MundlichB2PlanningStructure;
 use App\Models\MundlichB2PlanningTopic;
+use App\Models\MundlichB2SprechenCluster;
+use App\Models\MundlichB2SprechenTopic;
+use App\Models\MundlichB2SprechenUniversal;
 use App\Services\GoetheB1LesenImportService;
 use App\Services\HoerenImportService;
 use App\Services\MundlichB2PlanningImportService;
+use App\Services\MundlichB2SprechenImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -262,5 +266,69 @@ class AdminController extends Controller
         ]);
         $preview = $importer->preview($request->input('json'), $request->input('kind'));
         return response()->json($preview, isset($preview['error']) ? 422 : 200);
+    }
+
+    // ── Telc B2 Sprechen Teil 2 — Präsentation (3-layer Baukasten) ────
+
+    public function mundlichB2SprechenIndex()
+    {
+        return view('admin.mundlich.b2-sprechen.index', [
+            'universalRow' => MundlichB2SprechenUniversal::find(1),
+            'clusters'     => MundlichB2SprechenCluster::orderBy('position')->get(),
+            'topics'       => MundlichB2SprechenTopic::orderBy('order')->paginate(60),
+        ]);
+    }
+
+    public function mundlichB2SprechenImportShow()
+    {
+        return view('admin.mundlich.b2-sprechen.import');
+    }
+
+    public function mundlichB2SprechenImportHandle(Request $request, MundlichB2SprechenImportService $importer)
+    {
+        $request->validate([
+            'kind'      => 'required|in:universal,clusters,topics',
+            'source'    => 'required|in:json_text,json_file',
+            'json_text' => 'required_if:source,json_text|nullable|string',
+            'file'      => 'required_if:source,json_file|nullable|file|max:10240',
+        ]);
+
+        $json = $request->source === 'json_text'
+            ? $request->input('json_text')
+            : file_get_contents($request->file('file')->getRealPath());
+
+        $result = $importer->importByKind($request->input('kind'), $json);
+
+        session()->flash('import_result', $result);
+        session()->flash('import_kind', $request->input('kind'));
+        return redirect()->route('admin.mundlich.b2-sprechen.import.show');
+    }
+
+    public function mundlichB2SprechenImportPreview(Request $request, MundlichB2SprechenImportService $importer)
+    {
+        $request->validate([
+            'json' => 'required|string',
+            'kind' => 'required|in:universal,clusters,topics',
+        ]);
+        $preview = $importer->preview($request->input('json'), $request->input('kind'));
+        return response()->json($preview, isset($preview['error']) ? 422 : 200);
+    }
+
+    public function mundlichB2SprechenTopicDestroy(MundlichB2SprechenTopic $topic)
+    {
+        $topic->delete();
+        return back()->with('ok', 'تم حذف الموضوع.');
+    }
+
+    public function mundlichB2SprechenTopicToggle(MundlichB2SprechenTopic $topic)
+    {
+        $topic->update(['is_published' => ! $topic->is_published]);
+        return back()->with('ok', 'تم تحديث الحالة.');
+    }
+
+    public function mundlichB2SprechenClusterToggle(MundlichB2SprechenCluster $cluster)
+    {
+        $cluster->update(['is_published' => ! $cluster->is_published]);
+        return back()->with('ok', 'تم تحديث الحالة.');
     }
 }

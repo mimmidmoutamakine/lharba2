@@ -199,12 +199,26 @@
                 </span>
             </div>
 
-            {{-- Exam title + admin tag (if any) --}}
+            {{-- Title (individualTitle = main; examTitle = small chip) + admin tag --}}
+            @php
+                // individualTitle is the per-Teil heading; fall back to the exam title
+                // when a Teil has none (e.g. Sprachbausteine). Only show the exam chip
+                // when it actually adds info (i.e. differs from the heading shown).
+                $displayTitle = $topic->individual_title ?: $topic->title;
+                $showExamChip = $topic->individual_title && $topic->individual_title !== $topic->title;
+            @endphp
             <div class="relative">
                 <div class="flex items-start justify-between gap-2">
-                    <h3 class="font-bold text-white text-base leading-snug">{{ $topic->title }}</h3>
+                    <h3 class="font-bold text-white text-base leading-snug">{{ $displayTitle }}</h3>
                     @include('partials.topic-tag.badge', ['tag' => $topic->topicTag])
                 </div>
+                @if($showExamChip)
+                <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[10px] font-semibold text-slate-400"
+                      title="الامتحان: {{ $topic->title }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    {{ $topic->title }}
+                </span>
+                @endif
                 @if($topic->title_ar)
                 <p class="text-xs text-slate-500 mt-0.5" dir="rtl">{{ $topic->title_ar }}</p>
                 @endif

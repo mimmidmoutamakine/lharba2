@@ -12,7 +12,37 @@
         <span class="font-bold text-white text-base tabular-nums">{{ $exams->total() ?? $exams->count() }}</span>
         <span>امتحان</span>
         <span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">Teil {{ $teilNum }}</span>
+        @if(($activeCat ?? null))
+        <span class="px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold">
+            {{ ['standard' => 'ستاندارد', 'turkey' => 'تركيا', 'other' => 'أخرى'][$activeCat] ?? $activeCat }}
+        </span>
+        @endif
     </div>
+
+    {{-- Provenance filter (standard / تركيا). Only shown when this module actually
+         mixes more than one source — otherwise it's noise. Server-side, URL-driven,
+         same pattern as the Lesen Teil filter. --}}
+    @if(count($availableCats ?? []) > 1)
+    @php
+        $catLabels = ['standard' => 'ستاندارد', 'turkey' => 'تركيا', 'other' => 'أخرى'];
+    @endphp
+    <div class="mb-5 flex items-center gap-1 p-1 rounded-2xl bg-black/30 border border-white/[0.06] w-fit" dir="rtl">
+        <a href="{{ route('hoeren.imtihanat', ['teil' => $teilKey]) }}"
+           @class([
+                'px-3.5 py-1.5 rounded-xl text-[12px] font-semibold transition-all',
+                'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow' => ! ($activeCat ?? null),
+                'text-slate-400 hover:text-white' => ($activeCat ?? null),
+           ])>الكل</a>
+        @foreach($availableCats as $cat)
+        <a href="{{ route('hoeren.imtihanat', ['teil' => $teilKey, 'cat' => $cat]) }}"
+           @class([
+                'px-3.5 py-1.5 rounded-xl text-[12px] font-semibold transition-all',
+                'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow' => ($activeCat ?? null) === $cat,
+                'text-slate-400 hover:text-white' => ($activeCat ?? null) !== $cat,
+           ])>{{ $catLabels[$cat] ?? $cat }}</a>
+        @endforeach
+    </div>
+    @endif
 
     {{-- Exam cards. Outer is a <div> (not <a>) so the راجع/حفظت buttons inside
          don't fight with navigation. The "ابدأ" button is the actual link. --}}
@@ -35,6 +65,20 @@
                     <span>Hören · T{{ $teilNum }}</span>
                 </span>
                 <div class="flex items-center gap-1">
+                    {{-- Source provenance (ستاندارد / تركيا) — from update_category --}}
+                    @php $catLabel = $exam->categoryLabel(); @endphp
+                    @if($catLabel)
+                    <span @class([
+                            'px-1.5 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1',
+                            'bg-rose-500/15 border-rose-500/30 text-rose-300'    => $exam->categoryGroup() === 'turkey',
+                            'bg-slate-600/30 border-slate-600/50 text-slate-300' => $exam->categoryGroup() !== 'turkey',
+                          ])
+                          title="مصدر: {{ $exam->update_category }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg>
+                        {{ $catLabel }}
+                    </span>
+                    @endif
+
                     {{-- Admin-set topic tag (نادر / ما بقاش / جديد / ملاحظة) --}}
                     @include('partials.topic-tag.badge', ['tag' => $exam->topicTag])
 

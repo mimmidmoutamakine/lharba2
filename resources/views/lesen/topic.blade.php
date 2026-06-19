@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', $topic->title . ' | Lesen | ' . config('app.name'))
+@section('title', (($individualTitle ?? null) ?: $topic->title) . ' | Lesen | ' . config('app.name'))
 
 @section('content')
 @php
@@ -74,7 +74,17 @@
                  class="absolute top-full mt-2 right-0 min-w-[220px] bg-[#0B0C10] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 p-2 origin-top-right">
 
                 <div class="px-3 pt-2 pb-2 border-b border-white/[0.04] mb-1" dir="rtl">
-                    <h3 class="text-sm font-bold text-white truncate" dir="ltr">{{ $topic->title }}</h3>
+                    @php
+                        $headingTitle = ($individualTitle ?? null) ?: $topic->title;
+                        $showExamChip = ($individualTitle ?? null) && $individualTitle !== $topic->title;
+                    @endphp
+                    <h3 class="text-sm font-bold text-white truncate" dir="ltr">{{ $headingTitle }}</h3>
+                    @if($showExamChip)
+                    <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[10px] font-semibold text-slate-400" dir="ltr" title="الامتحان">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        {{ $topic->title }}
+                    </span>
+                    @endif
                     @if($topic->title_ar)
                     <p class="text-[11px] text-slate-500 truncate mt-0.5">{{ $topic->title_ar }}</p>
                     @endif

@@ -86,7 +86,12 @@ class TopicImportController extends Controller
             $level       = $e['level'] ?? 'B1';
             $part        = $request->input('part');
             $hasContent  = isset($e['content']) || ($part && isset($e[$part]));
-            $preview[]   = ['title' => $title, 'level' => $level, 'has_content' => $hasContent];
+            $preview[]   = [
+                'title'            => $title,
+                'individual_title' => $e['individualTitle'] ?? null,
+                'level'            => $level,
+                'has_content'      => $hasContent,
+            ];
         }
 
         return response()->json([

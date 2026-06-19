@@ -58,6 +58,13 @@ class TopicImportService
                     throw new \RuntimeException("Missing 'content' (or '$part') field");
                 }
 
+                // individualTitle is the per-Teil display title. We stash it inside the
+                // part's JSON blob so each Teil of one exam can carry its own heading,
+                // while examTitle stays the topic's shared grouping title (shown as a chip).
+                if (!empty($entry['individualTitle'])) {
+                    $content['individualTitle'] = $entry['individualTitle'];
+                }
+
                 $existing = $model::where('slug', $slug)->first();
 
                 if ($existing) {
@@ -283,7 +290,12 @@ class TopicImportService
                         }
                         $col = $col ?? 'teil1';
                     }
-                    $data[$col] = $part['content'] ?? null;
+                    $content = $part['content'] ?? null;
+                    // Carry the per-Teil individualTitle inside its blob (see importPartFromJson).
+                    if (is_array($content) && !empty($part['individualTitle'])) {
+                        $content['individualTitle'] = $part['individualTitle'];
+                    }
+                    $data[$col] = $content;
                 }
 
                 $model::updateOrCreate(['slug' => $slug], $data);

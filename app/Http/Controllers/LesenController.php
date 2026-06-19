@@ -48,6 +48,10 @@ class LesenController extends Controller
                 DB::raw('(teil3 IS NOT NULL) AS has_teil3'),
                 DB::raw('(sprachbausteine1 IS NOT NULL) AS has_sprachbausteine1'),
                 DB::raw('(sprachbausteine2 IS NOT NULL) AS has_sprachbausteine2'),
+                // Per-Teil display title (stored inside the active part's JSON blob).
+                // The index always filters to a single $teil, so we only extract that one.
+                // $teil is whitelisted above (TEIL_COLUMNS) — safe to inline.
+                DB::raw("json_extract({$teil}, '$.individualTitle') AS individual_title"),
             ])
             ->with('topicTag') // admin-set flags ("جديد", "نادر فاش كيتحط", ...)
             ->orderBy('level')
@@ -91,8 +95,12 @@ class LesenController extends Controller
             $activePartData = is_string($raw) ? json_decode($raw, true) : $raw;
         }
 
+        // Per-Teil display title (stored inside the part blob on import). Shown as the
+        // main heading; the topic's examTitle becomes a small chip beside it.
+        $individualTitle = is_array($activePartData) ? ($activePartData['individualTitle'] ?? null) : null;
+
         $timerEnabled = $request->boolean('timer');
-        return view('lesen.topic', compact('topic', 'activePart', 'activePartData', 'timerEnabled'));
+        return view('lesen.topic', compact('topic', 'activePart', 'activePartData', 'individualTitle', 'timerEnabled'));
     }
 
     public function submit(Request $request, string $slug)

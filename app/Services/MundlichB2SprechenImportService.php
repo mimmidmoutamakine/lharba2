@@ -17,7 +17,7 @@ use App\Models\MundlichB2SprechenUniversal;
  */
 class MundlichB2SprechenImportService
 {
-    public const KINDS = ['universal', 'clusters', 'topics'];
+    public const KINDS = ['universal', 'clusters', 'topics', 'texts'];
 
     /** Universal file → singleton payload. */
     public function importUniversal(string $rawJson): array
@@ -144,6 +144,66 @@ class MundlichB2SprechenImportService
         return $result;
     }
 
+    /**
+     * Original exam texts (from telccfree_b2_sprechen_teil2.json) → fill the `text`
+     * column on EXISTING topics, matched by id/slug (fallback: order). Never creates
+     * topics — upload the topics file first.
+     */
+    public function importTexts(string $rawJson): array
+    {
+        $result = ['imported' => 0, 'skipped' => 0, 'errors' => [], 'summary' => []];
+
+        $data = json_decode($rawJson, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $result['errors'][] = 'Invalid JSON: ' . json_last_error_msg();
+            return $result;
+        }
+        $items = $data['exercises'] ?? $data['topics'] ?? $data['entries'] ?? null;
+        if (! is_array($items)) {
+            $result['errors'][] = 'Texts JSON must have an "exercises" (or "topics") array.';
+            return $result;
+        }
+
+        $updated = 0;
+        $missing = [];
+        foreach ($items as $i => $e) {
+            if (! is_array($e)) { $result['skipped']++; continue; }
+            $slug  = trim((string) ($e['id'] ?? $e['slug'] ?? ''));
+            $order = isset($e['order']) ? (int) $e['order'] : null;
+            $text  = $this->extractText($e);
+            if ($text === '') { $result['skipped']++; continue; }
+
+            $topic = $slug !== '' ? MundlichB2SprechenTopic::where('slug', $slug)->first() : null;
+            if (! $topic && $order !== null) {
+                $topic = MundlichB2SprechenTopic::where('order', $order)->first();
+            }
+            if (! $topic) { $result['skipped']++; $missing[] = $slug ?: ('#' . $order); continue; }
+
+            $topic->update(['text' => $text]);
+            $updated++;
+        }
+
+        $result['imported'] = $updated;
+        $result['summary']  = ['updated' => $updated, 'unmatched' => count($missing)];
+        if ($missing) {
+            $result['errors'][] = 'بدون موضوع مطابق (رفع ملف topics أولاً): '
+                . implode(', ', array_slice($missing, 0, 10)) . (count($missing) > 10 ? ' …' : '');
+        }
+        return $result;
+    }
+
+    /** Pull the readable text from a source exercise: prefer joined `text`, else paragraphs. */
+    private function extractText(array $e): string
+    {
+        if (! empty($e['text']) && is_string($e['text'])) {
+            return trim($e['text']);
+        }
+        if (! empty($e['paragraphs']) && is_array($e['paragraphs'])) {
+            return trim(implode("\n\n", array_map('strval', $e['paragraphs'])));
+        }
+        return '';
+    }
+
     /** Dispatch by kind. */
     public function importByKind(string $kind, string $rawJson): array
     {
@@ -151,6 +211,7 @@ class MundlichB2SprechenImportService
             'universal' => $this->importUniversal($rawJson),
             'clusters'  => $this->importClusters($rawJson),
             'topics'    => $this->importTopics($rawJson),
+            'texts'     => $this->importTexts($rawJson),
             default     => ['imported' => 0, 'skipped' => 0, 'errors' => ["Unknown kind: {$kind}"], 'summary' => []],
         };
     }
@@ -181,6 +242,12 @@ class MundlichB2SprechenImportService
             if (! isset($data['topics']) || ! is_array($data['topics'])) return ['error' => 'Missing "topics" array.'];
             $slugs = array_values(array_filter(array_map(fn ($t) => $t['id'] ?? null, $data['topics'])));
             return ['kind' => 'topics', 'topic_count' => count($slugs), 'slugs' => $slugs];
+        }
+        if ($kind === 'texts') {
+            $items = $data['exercises'] ?? $data['topics'] ?? $data['entries'] ?? null;
+            if (! is_array($items)) return ['error' => 'Missing "exercises" array.'];
+            $withText = array_filter($items, fn ($e) => is_array($e) && (! empty($e['text']) || ! empty($e['paragraphs'])));
+            return ['kind' => 'texts', 'text_count' => count($withText), 'total' => count($items)];
         }
         return ['error' => "Unknown kind: {$kind}"];
     }

@@ -15,7 +15,7 @@ class MundlichB2SprechenTopic extends Model
     protected $table = 'mundlich_b2_sprechen_topics';
 
     protected $fillable = [
-        'slug', 'order', 'title', 'title_ar', 'cluster_ids',
+        'slug', 'order', 'title', 'title_ar', 'text', 'cluster_ids',
         'highlight_sentences', 'main_ideas', 'arguments', 'opinion_adjectives',
         'opinion_example', 'experience_example', 'difficult_vocabulary', 'is_published',
     ];

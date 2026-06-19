@@ -7,6 +7,7 @@
         'universal' => 'Universal (العُدّة الشاملة)',
         'clusters'  => 'Clusters (عائلات المواضيع)',
         'topics'    => 'Topics (المواضيع)',
+        'texts'     => 'Texte (النصوص الأصلية)',
     ];
     $defaultKind = session('import_kind', 'universal');
 @endphp
@@ -34,6 +35,7 @@
                 ✓ تم استيراد/تحديث: <strong>{{ $r['imported'] }}</strong>
                 @if(($r['summary']['topic_count'] ?? null) !== null) موضوع @endif
                 @if(($r['summary']['cluster_count'] ?? null) !== null) عائلة @endif
+                @if(($r['summary']['updated'] ?? null) !== null) نص أصلي @endif
                 @if(($r['summary']['argument_categories'] ?? null) !== null) ملف شامل ({{ $r['summary']['argument_categories'] }} صنف حجج) @endif
             @else
                 ⚠ لم يتم استيراد أي عنصر
@@ -59,9 +61,10 @@
             <strong class="text-amber-300">Universal</strong> = <code dir="ltr" class="text-amber-400">sprechen_teil2_universal.json</code> (صف وحيد، يُستبدل بالكامل).
             <strong class="text-amber-300">Clusters</strong> = <code dir="ltr" class="text-amber-400">sprechen_teil2_clusters.json</code>.
             <strong class="text-amber-300">Topics</strong> = <code dir="ltr" class="text-amber-400">sprechen_teil2_topics.json</code>.
-            (Clusters/Topics: يطابق بالـ id — الموجود يُحدَّث، غير المذكور يبقى.)
+            <strong class="text-amber-300">Texte</strong> = <code dir="ltr" class="text-amber-400">telccfree_b2_sprechen_teil2.json</code> (النص الأصلي — يُضاف للمواضيع الموجودة فقط).
+            (Clusters/Topics/Texte: يطابق بالـ id — الموجود يُحدَّث، غير المذكور يبقى.)
         </p>
-        <div class="grid sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             @foreach($kindOptions as $key => $label)
             <button type="button" @click="setKind('{{ $key }}')"
                     :class="kind === '{{ $key }}' ? 'border-amber-500/50 bg-amber-500/10 text-white' : 'border-white/[0.08] text-slate-400 hover:border-white/20 hover:text-slate-300'"
@@ -211,6 +214,18 @@
   ]
 }</pre>
             </div>
+            <div>
+                <div class="text-xs font-bold text-amber-300 mb-1">texts</div>
+                <pre class="text-xs font-mono text-slate-400 bg-[#0B0C10] p-4 rounded-xl overflow-x-auto leading-relaxed">{
+  "exercises": [
+    { "order": 1, "id": "sprechen_t2_fast_food...",
+      "title": "Fast Food...",
+      "paragraphs": ["Absatz 1 ...", "Absatz 2 ..."],
+      "text": "joined text (optional, falls back to paragraphs)" }
+  ]
+}
+// يطابق المواضيع الموجودة بالـ id (أو order) ويملأ خانة النص الأصلي.</pre>
+            </div>
         </div>
     </div>
 </div>
@@ -227,9 +242,10 @@ function sprechenImport() {
             universal: '{\n  "meta": {...},\n  "universal_argument_categories": [...],\n  "presentation_structures": {...},\n  "emergency_blocks": {...}\n}',
             clusters:  '{\n  "clusters": [\n    { "id": "...", "title": "...", "topic_orders": [...], "universal_argument_ids": [...] }\n  ]\n}',
             topics:    '{\n  "topics": [\n    { "order": 1, "id": "...", "title": "...", "arguments": {...}, "main_ideas": [...] }\n  ]\n}',
+            texts:     '{\n  "exercises": [\n    { "order": 1, "id": "...", "title": "...", "paragraphs": ["..."], "text": "..." }\n  ]\n}',
         },
-        labels: { universal: 'Universal', clusters: 'Clusters', topics: 'Topics' },
-        files:  { universal: 'sprechen_teil2_universal.json', clusters: 'sprechen_teil2_clusters.json', topics: 'sprechen_teil2_topics.json' },
+        labels: { universal: 'Universal', clusters: 'Clusters', topics: 'Topics', texts: 'Texte' },
+        files:  { universal: 'sprechen_teil2_universal.json', clusters: 'sprechen_teil2_clusters.json', topics: 'sprechen_teil2_topics.json', texts: 'telccfree_b2_sprechen_teil2.json' },
         kindLabel() { return this.labels[this.kind] || this.kind; },
         expectedFile() { return 'اضغط لاختيار ' + (this.files[this.kind] || '.json'); },
         setKind(k) { this.kind = k; this.jsonText = ''; this.fileName=''; this.fileSizeKb=0; this.previewMsg=''; this.previewSummary=''; this.jsonError=''; },
@@ -249,10 +265,15 @@ function sprechenImport() {
                     if (!Array.isArray(obj.clusters)) { this.jsonError = 'يجب أن يحتوي على "clusters" array.'; return; }
                     const keys = obj.clusters.map(c => c.id).filter(Boolean);
                     this.previewSummary = `clusters: ${keys.length}\n${keys.join(', ')}`;
-                } else {
+                } else if (this.kind === 'topics') {
                     if (!Array.isArray(obj.topics)) { this.jsonError = 'يجب أن يحتوي على "topics" array.'; return; }
                     const slugs = obj.topics.map(t => t.id).filter(Boolean);
                     this.previewSummary = `topics: ${slugs.length}\n${slugs.slice(0, 6).join(', ')}${slugs.length > 6 ? ', …' : ''}`;
+                } else {
+                    const items = obj.exercises || obj.topics || obj.entries;
+                    if (!Array.isArray(items)) { this.jsonError = 'يجب أن يحتوي على "exercises" array.'; return; }
+                    const withText = items.filter(e => e && (e.text || (e.paragraphs && e.paragraphs.length)));
+                    this.previewSummary = `texts: ${withText.length} / ${items.length} فيهم نص`;
                 }
                 this.previewMsg = 'JSON صالح ✓';
             } catch (e) { this.jsonError = 'JSON غير صالح: ' + e.message; }

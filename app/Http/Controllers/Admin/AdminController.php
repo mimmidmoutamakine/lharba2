@@ -287,7 +287,7 @@ class AdminController extends Controller
     public function mundlichB2SprechenImportHandle(Request $request, MundlichB2SprechenImportService $importer)
     {
         $request->validate([
-            'kind'      => 'required|in:universal,clusters,topics',
+            'kind'      => 'required|in:universal,clusters,topics,texts',
             'source'    => 'required|in:json_text,json_file',
             'json_text' => 'required_if:source,json_text|nullable|string',
             'file'      => 'required_if:source,json_file|nullable|file|max:10240',

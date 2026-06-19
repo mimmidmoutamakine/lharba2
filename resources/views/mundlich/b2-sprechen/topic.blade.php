@@ -40,6 +40,23 @@
 
     <div class="space-y-5">
 
+        {{-- Original exam text --}}
+        @if($topic->text)
+        <section class="rounded-2xl border border-white/[0.08] bg-[#111216] p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-slate-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+                <h2 class="font-bold text-white">النص الأصلي</h2>
+            </div>
+            <div class="space-y-2.5 text-[15px] leading-relaxed text-slate-200" dir="ltr">
+                @foreach(preg_split('/\n\s*\n|\n/', trim($topic->text)) as $para)
+                    @if(trim($para) !== '')
+                    <p>{{ trim($para) }}</p>
+                    @endif
+                @endforeach
+            </div>
+        </section>
+        @endif
+
         {{-- Highlight sentences --}}
         @if(!empty($topic->highlight_sentences))
         <section class="rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.07] to-transparent p-5">

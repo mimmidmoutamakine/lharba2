@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\ForceCanonicalHost::class);
+
         $middleware->alias([
             'admin'      => \App\Http\Middleware\AdminMiddleware::class,
             'has.access' => \App\Http\Middleware\HasAccess::class,

@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Force non-www canonical host (prevents CORS breakage on www.lharba.tech)
+    RewriteCond %{HTTP_HOST} ^www\.lharba\.tech$ [NC]
+    RewriteRule ^(.*)$ https://lharba.tech/$1 [L,R=301]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

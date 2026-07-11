@@ -14,7 +14,7 @@
         'sprachbausteine2' => $activePart === 'sprachbausteine2' ? $activePartData : null,
     ];
 @endphp
-<div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 md:pt-32 pb-8"
+<div class="max-w-7xl mx-auto px-4 md:px-6 pt-28 md:pt-32 pb-4"
      x-data="lesenTopic({{ json_encode($partsPayload) }}, {{ json_encode($activePart ?? null) }}, {{ ($timerEnabled ?? false) ? 'true' : 'false' }}, {{ json_encode($topic->slug) }})"
      x-effect="_lockBodyScroll(t3SheetOpen || sheetOpen || qSheetOpen || sb1SheetOpen || sb2SheetOpen)"
      @keydown.escape.window="
@@ -145,10 +145,10 @@
         </template>
 
         {{-- DESKTOP: two-column layout — both columns scroll independently --}}
-        <div class="hidden lg:grid grid-cols-[1fr_360px] gap-6 items-start lg:h-[calc(100vh-10rem)]">
+        <div class="hidden lg:grid grid-cols-[1fr_360px] gap-6 items-start lg:max-h-[calc(100vh-9rem)]">
 
             {{-- LEFT: Texts (own scroll) --}}
-            <div class="h-full overflow-y-auto pr-2 space-y-4">
+            <div class="lg:max-h-[calc(100vh-9rem)] overflow-y-auto pr-2 space-y-4">
                 <template x-for="txt in parts.teil1.texts" :key="txt.id">
                     <div class="rounded-2xl border transition-all duration-200 overflow-hidden cursor-pointer select-none"
                          :class="[
@@ -228,11 +228,11 @@
             </div>
 
             {{-- RIGHT: Headlines (always-visible column, header + scroll list + submit) --}}
-            <div class="h-full flex flex-col gap-2"
+            <div class="lg:max-h-[calc(100vh-9rem)] flex flex-col gap-2"
                  @dragover.prevent
                  @drop.prevent="dropOnPanel($event)">
                 <div class="shrink-0 text-xs text-slate-500 uppercase tracking-wider px-1" dir="rtl">العناوين — اختر واحداً</div>
-                <div class="flex-1 overflow-y-auto pr-1 space-y-2">
+                <div class="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
                     <template x-for="h in parts.teil1.headlines" :key="h.id">
                         <div class="flex items-start gap-3 px-4 py-3 rounded-xl border transition-all duration-150"
                              :class="headlineClass(h.id)"
@@ -515,19 +515,19 @@
         </template>
 
         {{-- DESKTOP: two-column layout --}}
-        <div class="hidden lg:grid grid-cols-[1fr_440px] gap-6 items-start lg:h-[calc(100vh-10rem)]">
+        <div class="hidden lg:grid grid-cols-[1fr_440px] gap-6 items-start lg:max-h-[calc(100vh-9rem)]">
 
             {{-- LEFT: Long reading text (own scroll) --}}
-            <div class="h-full overflow-y-auto pr-2">
+            <div class="lg:max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
                 <article class="rounded-2xl border border-white/[0.08] bg-[#111216] overflow-hidden">
                     <div class="px-6 py-3 border-b border-white/[0.05] flex items-center justify-between">
                         <span class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Leseverstehen Teil 2</span>
                         <span class="text-xs text-slate-600" x-text="(parts.teil2.questions?.length ?? 0) + ' Fragen'"></span>
                     </div>
                     <template x-if="parts.teil2.textTitle">
-                        <h2 class="px-6 pt-5 pb-1 text-xl md:text-2xl font-black tracking-tight text-white" x-text="parts.teil2.textTitle"></h2>
+                        <h2 class="px-5 pt-3.5 pb-1 text-lg md:text-xl font-black tracking-tight text-white" x-text="parts.teil2.textTitle"></h2>
                     </template>
-                    <div class="px-6 py-6 text-[15px] text-slate-200 leading-[1.85] whitespace-pre-line"
+                    <div class="px-5 py-4 text-[14px] text-slate-200 leading-[1.65] whitespace-pre-line"
                          x-text="parts.teil2.textContent"></div>
 
                     {{-- Optional Arabic summary --}}
@@ -544,19 +544,19 @@
             </div>
 
             {{-- RIGHT: Questions (always visible — header + scroll list + submit) --}}
-            <div class="h-full flex flex-col gap-3">
+            <div class="lg:max-h-[calc(100vh-9rem)] flex flex-col gap-3">
                 <div class="shrink-0 text-xs text-slate-500 uppercase tracking-wider px-1" dir="rtl">الأسئلة — اختر إجابة واحدة لكل سؤال</div>
-                <div class="flex-1 overflow-y-auto pr-1 space-y-5">
+                <div class="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2.5">
 
                 <template x-for="(q, qi) in parts.teil2.questions" :key="qi">
-                    <div class="rounded-2xl border bg-[#111216] overflow-hidden transition-all"
+                    <div class="rounded-xl border bg-[#111216] overflow-hidden transition-all"
                          :class="submitted
                              ? (answers[qi] === correctAnswers[qi] ? 'border-green-500/40' : 'border-red-500/40')
                              : answers[qi] !== undefined ? 'border-amber-500/40' : 'border-white/[0.08]'">
 
                         {{-- Question header --}}
-                        <div class="px-4 py-3 border-b border-white/[0.05] flex items-start gap-3">
-                            <span class="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold"
+                        <div class="px-3.5 py-2 border-b border-white/[0.05] flex items-start gap-2.5">
+                            <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-[11px] font-bold"
                                   :class="submitted
                                       ? (answers[qi] === correctAnswers[qi] ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400')
                                       : answers[qi] !== undefined ? 'bg-amber-600 text-white' : 'bg-white/5 text-slate-400'"
@@ -565,11 +565,11 @@
                         </div>
 
                         {{-- Options --}}
-                        <div class="p-3 space-y-2">
+                        <div class="p-2 space-y-1.5">
                             <template x-for="(opt, oi) in q.options" :key="oi">
                                 <button @click="selectOption(qi, oi)"
                                         :disabled="submitted"
-                                        class="w-full text-left px-4 py-3 rounded-xl border text-sm transition-all flex items-start gap-3 group/opt"
+                                        class="w-full text-left px-3 py-2 rounded-lg border text-[13px] transition-all flex items-start gap-2.5 group/opt"
                                         :class="submitted
                                             ? (oi === correctAnswers[qi]
                                                 ? 'border-green-500/50 bg-green-500/10 text-green-100'
@@ -579,7 +579,7 @@
                                             : answers[qi] === oi
                                                 ? 'border-amber-500 bg-amber-500/10 text-white'
                                                 : 'border-white/[0.08] bg-[#0B0C10] text-slate-300 hover:border-white/20 hover:bg-white/[0.04] cursor-pointer'">
-                                    <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-[11px] font-black uppercase mt-0.5"
+                                    <span class="shrink-0 w-5 h-5 flex items-center justify-center rounded text-[10px] font-black uppercase mt-px"
                                           :class="submitted
                                               ? (oi === correctAnswers[qi]
                                                   ? 'bg-green-500/20 text-green-300'
@@ -840,10 +840,10 @@
         </template>
 
         {{-- DESKTOP: two-column layout — both columns viewport-bound, scroll independently --}}
-        <div class="hidden lg:grid grid-cols-[1fr_420px] gap-6 items-start lg:h-[calc(100vh-10rem)]">
+        <div class="hidden lg:grid grid-cols-[1fr_420px] gap-6 items-start lg:max-h-[calc(100vh-9rem)]">
 
             {{-- LEFT: Ads (own scroll) --}}
-            <div class="h-full overflow-y-auto pr-2 space-y-3">
+            <div class="lg:max-h-[calc(100vh-9rem)] overflow-y-auto pr-2 space-y-3">
                 <template x-for="ad in parts.teil3.ads" :key="ad.id">
                     <article :id="'ad-' + ad.id"
                              class="rounded-2xl border bg-[#111216] overflow-hidden transition-all scroll-mt-2"
@@ -899,7 +899,7 @@
             </div>
 
             {{-- RIGHT: Situations (full viewport height, scrolls only as last resort) --}}
-            <div class="h-full overflow-y-auto pr-1 flex flex-col gap-1.5"
+            <div class="lg:max-h-[calc(100vh-9rem)] overflow-y-auto pr-1 flex flex-col gap-1.5"
                  @dragover.prevent>
                 <div class="shrink-0 flex items-center justify-between px-1" dir="rtl">
                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">المواقف</span>
@@ -1247,10 +1247,10 @@
         </template>
 
         {{-- DESKTOP: text on the left, options panel on the right --}}
-        <div class="hidden lg:grid grid-cols-[1fr_400px] gap-6 items-start lg:h-[calc(100vh-10rem)]">
+        <div class="hidden lg:grid grid-cols-[1fr_400px] gap-6 items-start lg:max-h-[calc(100vh-9rem)]">
 
             {{-- LEFT: text article with inline blanks --}}
-            <div class="h-full overflow-y-auto pr-2">
+            <div class="lg:max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
             <article class="rounded-2xl border border-white/[0.08] bg-[#111216]">
                 <div class="px-6 py-3 border-b border-white/[0.05] flex items-center justify-between">
                     <span class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Sprachbausteine Teil 1</span>
@@ -1301,12 +1301,12 @@
             </div>{{-- /left column --}}
 
             {{-- RIGHT: options panel — one card per blank --}}
-            <div class="h-full flex flex-col gap-2">
+            <div class="lg:max-h-[calc(100vh-9rem)] flex flex-col gap-2">
                 <div class="shrink-0 flex items-center justify-between px-1" dir="rtl">
                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">الفراغات</span>
                     <span class="text-[10px] text-slate-600" x-text="Object.keys(answers).length + '/' + total"></span>
                 </div>
-                <div class="flex-1 overflow-y-auto pr-1 space-y-1">
+                <div class="flex-1 min-h-0 overflow-y-auto pr-1 space-y-1">
                     <template x-for="b in (parts.sprachbausteine1.blanks ?? [])" :key="b.id">
                         <div :id="'sb1-card-' + b.id" dir="ltr"
                              class="rounded-md border bg-[#111216] overflow-hidden transition-all scroll-mt-2"
@@ -1557,10 +1557,10 @@
         </template>
 
         {{-- DESKTOP: text on the left, word pool on the right --}}
-        <div class="hidden lg:grid grid-cols-[1fr_400px] gap-6 items-start lg:h-[calc(100vh-10rem)]">
+        <div class="hidden lg:grid grid-cols-[1fr_400px] gap-6 items-start lg:max-h-[calc(100vh-9rem)]">
 
             {{-- LEFT: text article with inline blanks --}}
-            <div class="h-full overflow-y-auto pr-2">
+            <div class="lg:max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
                 <article class="rounded-2xl border border-white/[0.08] bg-[#111216]">
                     <div class="px-6 py-3 border-b border-white/[0.05] flex items-center justify-between">
                         <span class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Sprachbausteine Teil 2</span>
@@ -1613,12 +1613,12 @@
             </div>
 
             {{-- RIGHT: word pool --}}
-            <div class="h-full flex flex-col gap-2">
+            <div class="lg:max-h-[calc(100vh-9rem)] flex flex-col gap-2">
                 <div class="shrink-0 flex items-center justify-between px-1" dir="rtl">
                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-500" x-text="submitted ? 'الشروحات' : 'القاموس — اختر كلمة'"></span>
                     <span class="text-[10px] text-slate-600" x-text="submitted ? (score + '/' + total) : (Object.keys(answers).length + '/' + total)"></span>
                 </div>
-                <div class="flex-1 overflow-y-auto pr-1">
+                <div class="flex-1 min-h-0 overflow-y-auto pr-1">
                     {{-- Before submit: word pool grid --}}
                     <template x-if="!submitted">
                         <div class="grid grid-cols-2 gap-1.5">

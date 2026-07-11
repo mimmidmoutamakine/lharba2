@@ -2056,7 +2056,12 @@ function lesenTopic(parts, initialPart, timerEnabled, topicSlug) {
                 this.sb1Paragraphs = paras.filter(p => p.length);
                 this.parts.sprachbausteine1.blanks = blanks;
                 this.correctAnswers = blanks.reduce((acc, b) => { acc[b.id] = b.correct; return acc; }, {});
-                this.total          = blanks.length;
+                // Zweiteilige Konjunktionen (entweder…oder, sowohl…als auch, zwar…aber, …)
+                // are stored as two segments sharing one id — both render as gaps that read
+                // answers[id], so picking once fills both. Count unique blank ids only,
+                // otherwise the disabled check `Object.keys(answers).length < total` is
+                // always off-by-one and the submit button never enables.
+                this.total          = Object.keys(this.correctAnswers).length;
             } else if (this.activePart === 'sprachbausteine2' && this.parts.sprachbausteine2) {
                 const segs = this.parts.sprachbausteine2.segments ?? [];
                 const blanks = segs.filter(s => typeof s === 'object' && s !== null);

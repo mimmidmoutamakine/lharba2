@@ -245,9 +245,9 @@
                 {{-- Mobile Hamburger --}}
                 <button @click="toggle()" class="lg:hidden relative w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 overflow-hidden active:scale-90 bg-white/5 border-white/10 text-white shadow-inner" aria-label="Open menu">
                     <div class="relative flex flex-col gap-1.5 items-end px-3">
-                        <span class="h-0.5 rounded-full transition-all duration-300 bg-white" :class="open ? 'w-5 rotate-45 translate-y-2' : 'w-5'"></span>
-                        <span class="h-0.5 rounded-full transition-all duration-300 bg-white" :class="open ? 'opacity-0 w-3' : 'w-3'"></span>
-                        <span class="h-0.5 rounded-full transition-all duration-300 bg-white" :class="open ? 'w-5 -rotate-45 -translate-y-2' : 'w-4'"></span>
+                        <span class="h-0.5 rounded-full transition-all duration-300 bg-current" :class="open ? 'w-5 rotate-45 translate-y-2' : 'w-5'"></span>
+                        <span class="h-0.5 rounded-full transition-all duration-300 bg-current" :class="open ? 'opacity-0 w-3' : 'w-3'"></span>
+                        <span class="h-0.5 rounded-full transition-all duration-300 bg-current" :class="open ? 'w-5 -rotate-45 -translate-y-2' : 'w-4'"></span>
                     </div>
                 </button>
             </div>
